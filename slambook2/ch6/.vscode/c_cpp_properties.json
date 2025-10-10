@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/local/include/ceres",
+                // "/usr/include/",
+                "/usr/include/opencv4"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}

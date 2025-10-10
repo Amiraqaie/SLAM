@@ -1,0 +1,8 @@
+{
+    "cmake.ignoreCMakeListsMissing": true,
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "ostream": "cpp"
+    }
+}

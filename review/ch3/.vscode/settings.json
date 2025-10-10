@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "iostream": "cpp",
+        "chrono": "cpp"
+    }
+}

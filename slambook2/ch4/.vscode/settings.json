@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "geometry": "cpp",
+        "iostream": "cpp",
+        "cmath": "cpp",
+        "*.tcc": "cpp",
+        "complex": "cpp",
+        "random": "cpp",
+        "*.inc": "cpp"
+    }
+}

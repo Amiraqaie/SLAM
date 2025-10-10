@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "ostream": "cpp",
+        "*.inc": "cpp",
+        "*.ipp": "cpp",
+        "vector": "cpp",
+        "string": "cpp",
+        "iostream": "cpp"
+    }
+}

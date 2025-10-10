@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/opencv4/",
+                "/usr/include/pcl-1.12/",
+                "/usr/include/vtk-9.1/"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}
