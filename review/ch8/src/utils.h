@@ -13,8 +13,8 @@ void OpticalFlowMultiLevel(const Mat &img1,const Mat &img2,const vector<KeyPoint
 
 bool load_images(Mat &image1, Mat &image2)
 {
-    image1 = imread("/home/amir/SLAM/review/ch8/images/LK1.png", IMREAD_GRAYSCALE);
-    image2 = imread("/home/amir/SLAM/review/ch8/images/LK2.png", IMREAD_GRAYSCALE);
+    image1 = imread("/home/havaie/Git/SLAM/review/ch8/images/LK1.png", IMREAD_GRAYSCALE);
+    image2 = imread("/home/havaie/Git/SLAM/review/ch8/images/LK2.png", IMREAD_GRAYSCALE);
 
     if (image1.empty() || image2.empty())
     {

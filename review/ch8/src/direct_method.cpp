@@ -18,9 +18,9 @@ double fx = 718.856, fy = 718.856, cx = 607.1928, cy = 185.2157;
 double baseline = 0.573;
 
 // paths
-string left_file = "/home/amir/SLAM/slambook2/ch8/images/left.png";
-string disparity_file = "/home/amir/SLAM/slambook2/ch8/images/disparity.png";
-boost::format fmt_others("/home/amir/SLAM/slambook2/ch8/images/%06d.png");    // other files
+string left_file = "/home/havaie/Git/SLAM/slambook2/ch8/images/left.png";
+string disparity_file = "/home/havaie/Git/SLAM/slambook2/ch8/images/disparity.png";
+boost::format fmt_others("/home/havaie/Git/SLAM/slambook2/ch8/images/%06d.png");    // other files
 
 /// class for accumulator jacobians in parallel
 class JacobianAccumulator;
