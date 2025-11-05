@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "camera.h": "c",
+        "common_include.h": "c",
+        "core": "cpp",
+        "complex": "cpp",
+        "memory": "cpp",
+        "mutex": "cpp"
+    }
+}
