@@ -3,8 +3,8 @@
 #ifndef FEATURE_H
 #define FEATURE_H
 
-#include <memory.h>
 #include <opencv2/features2d.hpp>
+#include "common_include.h"
 
 struct Frame;
 struct MapPoint;
@@ -12,7 +12,7 @@ struct MapPoint;
 struct Feature
 {
 public:
-
+    
     typedef std::shared_ptr<Feature> Ptr;
 
     std::weak_ptr<Frame> frame_;

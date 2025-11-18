@@ -5,6 +5,9 @@
         "core": "cpp",
         "complex": "cpp",
         "memory": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "list": "cpp",
+        "map": "c",
+        "condition_variable": "cpp"
     }
 }
