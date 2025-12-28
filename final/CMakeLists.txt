@@ -4,7 +4,7 @@ project(AutSlam VERSION 0.1.0 LANGUAGES C CXX)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
-add_library(slamlib src/camera.cpp src/feature.cpp src/dataset.cpp src/frame.cpp src/mappoint.cpp)
+add_library(slamlib src/camera.cpp src/feature.cpp src/dataset.cpp src/frame.cpp src/mappoint.cpp src/map.cpp)
 
 target_link_libraries(slamlib
                        PUBLIC ${OpenCV_LIBS})
