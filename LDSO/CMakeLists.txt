@@ -12,7 +12,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # check for the c++ Standard
-if($(CMAKE_VERSION) VERSION_LESS "3.8")
+if(${CMAKE_VERSION} VERSION_LESS "3.8")
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
@@ -29,27 +29,47 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
-# required libraries
+# Required libraries
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
 find_package(Pangolin REQUIRED)
-
-# optional libraries
-find_package(LibZip QUIET)
+find_package(g2o REQUIRED)
+find_package(DBoW3 REQUIRED)
 
 # set additional compile flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function -march=native")
 if(NOT APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
-# Decision if we have ZipLib
-if(LIBZIP_LIBRARY)
-    message(STATUS "LibZip found, enabling zip file support.")
-    add_definitions(-DHAS_ZIPLIB=1)
-    include_directories(${LIBZIP_INCLUDE_DIR_ZIP} ${LIBZIP_INCLUDE_DIR_ZIPCONF})
-else()
-    message(STATUS "LibZip not found, disabling zip file support.")
-    set(LIBZIP_LIBRARY "")
-endif()
+# add include directories
+include_directories(
+    ${EIGEN3_INCLUDE_DIR}           # Eigen3 for linear algebra
+    ${OpenCV_INCLUDE_DIRS}          # OpenCV for image processing
+    ${Glog_INCLUDE_DIRS}            # Glog  for logging
+    ${DBoW3_INCLUDE_DIRS}           # DBoW3 for place recognition
+    
+    ${PROJECT_SOURCE_DIR}/include   # project includes
+)
+
+set(THIRD_PARTY_LIBS
+    ${OpenCV_LIBS}
+    glog::glog
+    ${Pangolin_LIBRARIES}
+    ${G2O_CORE_LIBRARY}
+    ${DBoW3_LIBS}
+    g2o::core
+    g2o::stuff
+    g2o::solver_dense
+    g2o::solver_csparse
+    g2o::types_sba
+    g2o::types_slam3d
+)
+
+# test all requirments to be available
+add_executable(test src/test.cpp)
+
+target_link_libraries(test
+    ${THIRD_PARTY_LIBS}
+)

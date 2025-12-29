@@ -1,0 +1,16 @@
+1. if library include dir is directly in /usr/inlcude or /usr/local/include then there is no need to add it usign include_directories in cmake
+    use  { #inlcude "DBoW3/DBoW3.h" }
+2. if library .so files are directly in /usr/lib or /usr/local/lib or /usr/lib/x86_64-linux-gnu then the name of library can put in target_link_libraries directly
+    for example like target_link_libraries( main DBoW3) for /usr/local/lib/libDBoW3.so
+3. if a library define it include and lib directory as set() command its better to use them
+    like ${OpenCV_LIBS} and ${OpenCV_INCLUDE_DIRS} after doing find_package(OpenCV REQUIRED) the
+    variables can be used
+4 if a library gives modern cmake targets like g20 we can use them after find_package(g2o REQUIRED)
+    like    g2o::core
+            g2o::stuff
+            g2o::solver_dense
+            g2o::solver_csparse
+            g2o::types_sba
+            g2o::types_slam3d 
+    in the target_link_libraries command. the list of targets are shown by { cat /usr/local/lib/cmake/g2o/g2oTargets.cmake | grep "add_library(g2o::" }
+5. in find_package(g2o REQUIRED) the name of g2o comes from that cmake file exists in /usr/local/lib/cmake/g2o + CASE MATTERS TO BE EXACTLY AS PATH

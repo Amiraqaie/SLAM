@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(AutSlam VERSION 0.1.0 LANGUAGES C CXX)
 
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Glog REQUIRED)
+find_package(Pangolin REQUIRED)
+find_package(G2O REQUIRED)
+
 
 add_library(slamlib src/camera.cpp src/feature.cpp src/dataset.cpp src/frame.cpp src/mappoint.cpp src/map.cpp)
 
