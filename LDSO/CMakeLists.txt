@@ -67,9 +67,6 @@ set(THIRD_PARTY_LIBS
     g2o::types_slam3d
 )
 
-# test all requirments to be available
-add_executable(test src/test.cpp)
-
-target_link_libraries(test
-    ${THIRD_PARTY_LIBS}
-)
+# the main source code of LDSO
+add_subdirectory(src)
+add_subdirectory(examples)

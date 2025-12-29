@@ -1,3 +1,0 @@
-/home/havaie/Codes/SLAM/LDSO/bin/CMakeFiles/test.dir
-/home/havaie/Codes/SLAM/LDSO/bin/CMakeFiles/edit_cache.dir
-/home/havaie/Codes/SLAM/LDSO/bin/CMakeFiles/rebuild_cache.dir
