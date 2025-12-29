@@ -2,4 +2,5 @@
 Visual-GPS-SLAM/
 slambook2_ref
 **/build/
-thirdparty
+thirdparty/*
+LDSO/thirdparty/*

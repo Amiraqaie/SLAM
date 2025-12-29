@@ -1,0 +1,9 @@
+[submodule "LDSO/thirdpart/g2o"]
+	path = LDSO/thirdpart/g2o
+	url = https://github.com/RainerKuemmerle/g2o.git
+[submodule "LDSO/thirdpart/DBow3"]
+	path = LDSO/thirdpart/DBow3
+	url = https://github.com/rmsalinas/DBow3.git
+[submodule "LDSO/thirdparty/Pangolin"]
+	path = LDSO/thirdparty/Pangolin
+	url = https://github.com/stevenlovegrove/Pangolin.git
