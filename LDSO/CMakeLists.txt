@@ -30,11 +30,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 # Required libraries
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
 find_package(Pangolin REQUIRED)
-find_package(g2o REQUIRED)
+find_package(g2o CONFIG REQUIRED)
 find_package(DBoW3 REQUIRED)
 
 # set additional compile flags
