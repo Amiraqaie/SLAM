@@ -10,12 +10,14 @@ find_package(Pangolin REQUIRED)
 find_package(G2O REQUIRED)
 
 
-add_library(slamlib src/camera.cpp src/feature.cpp src/dataset.cpp src/frame.cpp src/mappoint.cpp src/map.cpp)
+add_library(slamlib src/camera.cpp src/feature.cpp src/dataset.cpp src/frame.cpp src/mappoint.cpp src/map.cpp src/viewer.cpp src/frontend.cpp)
 
 target_link_libraries(slamlib
-                       PUBLIC ${OpenCV_LIBS})
+                       PUBLIC ${OpenCV_LIBS}
+                       PUBLIC ${Pangolin_LIBRARIES})
 
 target_include_directories(slamlib
+                            PUBLIC ${Pangolin_INCLUDE_DIRS}
                             PUBLIC ${PROJECT_SOURCE_DIR}/include
                             PUBLIC ${EIGEN3_INCLUDE_DIR}
                             PUBLIC ${OpenCV_INCLUDE_DIR})

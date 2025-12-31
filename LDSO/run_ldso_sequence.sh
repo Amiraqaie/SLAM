@@ -1,7 +1,7 @@
 ./bin/run_ldso_tum_mono \
     preset=0 \
-    files="$1" \
-    vignette="$2" \
-    calib="$3" \
-    vocab="$4" \
-    gamma="$5"
+    files=./tum/sequence_45/images.zip \
+    vignette=./tum/sequence_45/vignette.png \
+    calib=./tum/sequence_45/camera.txt \
+    vocab=./vocab/orbvoc.dbow3 \
+    gamma=./tum/sequence_45/pcalib.txt
