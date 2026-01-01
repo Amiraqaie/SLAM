@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <glog/logging.h>
+#include <thread>
 // TODO : add includes libraries
 // TODO : add includes full system
 // TODO : add parsing functions
@@ -311,10 +312,35 @@ void parseArgument(char* arg) {
         }
         return;
     }
+
+    if (sscanf(arg, "mode=%d", &option) == 1) {
+        if (option == 0)
+        {
+            cout << "PHOTOMETRIC MODE WITH CALIBRATION" << endl;
+        }
+        else if (option == 1)
+        {
+            // TODO : setting_photometricCalibration = 0;
+            // TODO : setting_affineOptModeA = 0; // -1: fix. >=0: optimize (with prior, if > 0)
+            // TODO : setting_affineOptModeB = 0; // -1: fix. >=0: optimize (with prior, if > 0)
+            cout << "PHOTOMETRIC MODE WITHOUT CALIBRATION" << endl;
+        }
+        else if (option == 2)
+        {
+            // TODO : setting_photometricCalibration = 1;
+            // TODO : setting_affineOptModeA = -1; // -1: fix. >=0: optimize (with prior, if > 0)
+            // TODO : setting_affineOptModeB = -1; // -1: fix. >=0: optimize (with prior, if > 0)
+            // TODO : setting_minGradHistAdd = 3;
+            cout << "PHOTOMETRIC MODE WITH PERFECT IMAGES" << endl;
+        }
+        return;
+    }
+    cout << "WARNING: Unknown argument " << arg << " ignored." << endl;
 }
 
 int main(int argc, char** argv)
 {    
+    google::InitGoogleLogging(argv[0]);
     bool FLAGS_colorlogtostderr = true;
 
     // parsing arguments
@@ -322,6 +348,100 @@ int main(int argc, char** argv)
     {
         parseArgument(argv[i]);
     }
+
+    // TODO : check setting conflicts
+    /*
+    if (setting_enableLoopCloosing && (setting_pointSelection != 1))
+    {
+        LOG(ERROR) << "Loop closing only works with 'HARRIS' point selection. Please set 'pointselection=1'." << endl;
+        return -1;
+    }
+    */
+   
+    // TODO ; create and run system
+    /*
+    if (setting_showLoopClosing == true)
+    {
+        LOG(WARNING) << "Loop closing visualization requires GUI. Forcing GUI on. the program will be paused when loop is found " << endl;
+    }
+    */
     
+    /* TODO : create data reader
+    shared_ptr<ImageFolderReader> reader(new ImageFolderReader(ImageFolderReader::TUM_MONO,
+    source,
+    calib,
+    gammaCalib,
+    vignette));
+    */
+
+    // TODO : reader->setGlobalCalibration();
+
+    /* TODO : check photometric calibration availability
+    if (setting_photometricCalibration > 0 && reader->getPhotometricGamma() == 0)
+    {
+        LOG(ERROR) << "ERROR :  Dont have photometric calibration. Need to use commandline options mode=1 or mode=2" << endl;
+        return -1;
+    }
+    */
+
+    int lstart = startIdx;;
+    int lend = endIdx;
+    int linc = 1;
+
+    if (reverseplay)
+    {
+        LOG(INFO) << "REVERSE PLAY ENABLED!" << endl;
+        lstart = endIdx - 1;
+        /* TODO : check end index
+        if (lstart >= reader.getNumImages())
+        {
+            lstart = reader.getNumImages() - 1;
+        }
+        */
+        lend = startIdx;
+        linc = -1;
+    }
+
+    // Load the ORB Vocabulary for Loop Closing
+    /*  TODO : load vocabulary
+    shared_ptr<ORBVocabulary> voc(new ORBVocabulary());
+    voc->load(vocPath);
+    LOG(INFO) << "Loading ORB Vocabulary from " << vocPath << endl;
+    */
+
+    /* TODO : create full system
+    shared_ptr<FullSystem> fullSystem(new FullSystem(voc));
+    fullSystem->setGammaFunction(reader->getPhotometricGamma());
+    fullSystem->linearizeOperation = (playbackSpeed == 0);
+    */
+
+    /* TODO : create data feeder
+    shared_ptr<PangolinDSOViewer> viewer = nullptr;
+    if (!disableAllDisplay)
+    {
+        viewer = shared_ptr<PangolinDSOViewer>(new PangolinDSOViewer(wG[0], hG[0], false));
+        fullSystem->setViewer(viewer);
+    } else 
+    {
+        LOG(INFO) << "VIEWER DISABLED" << endl;
+    }
+    */
+
+    // this is the main loop which runs on a separate thread
+    std::thread runthread([&]() {});
+    
+
+    /*
+    if (viewer)
+    {
+        viewer->run();  // mac os should keep this in the main thread
+    }
+    viewer->saveAsPLYFille("pointcloud.ply");
+    */
+    
+    runthread.join();  // this will wait until the processing thread is done
+    LOG(INFO) << "Saved pointcloud to pointcloud.ply" << endl;
+    LOG(INFO) << "Finished!" << endl;
+
     return 0;
 }
