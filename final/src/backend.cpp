@@ -1,0 +1,177 @@
+#include "backend.h"
+#include "algorithm.h"
+#include "feature.h"
+#include "g2o_types.h"
+#include "map.h"
+#include "mappoint.h"
+
+Backend::Backend()
+{
+    backend_running_.store(true);
+    backend_thread_ = std::thread(&Backend::BackendLoop, this);
+}
+
+void Backend::UpdateMap()
+{
+    std::unique_lock<std::mutex> lock(data_mutex_);
+    map_update_.notify_one();
+}
+
+void Backend::Stop()
+{
+    backend_running_.store(false);
+    map_update_.notify_one();
+    backend_thread_.join();
+}
+
+void Backend::Optimize(Map::KeyframesType& keyframes, 
+                       Map::LandmarksType& landmarks)
+{
+    // Optimization code here
+    typedef g2o::BlockSolver_6_3 BlockSolverType;
+    typedef g2o::LinearSolverCSparse<BlockSolverType::PoseMatrixType> LinearSolverType;
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(
+        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
+    g2o::SparseOptimizer optimizer;
+    optimizer.setAlgorithm(solver);
+
+    // Add vertices for keyframes
+    std::unordered_map<unsigned long, VertexPose*> vertices;
+    unsigned long max_kf_id = 0;
+    for (auto &keyframe : keyframes)
+    {
+        auto kf = keyframe.second;
+        VertexPose* v = new VertexPose();
+        v->setId(kf->id_);
+        v->setEstimate(kf->pose_);
+        optimizer.addVertex(v);
+        if (kf->id_ > max_kf_id)
+            max_kf_id = kf->id_;
+        vertices.insert({kf->keyframe_id_, v});
+    }
+
+    // add vertices for mappoints
+    std::unordered_map<unsigned long, VertexXYZ*> vertices_landmark;
+    // for (auto &landmark : landmarks)
+    // {
+    //     if (landmark.second->is_outlier_)
+    //         continue;
+    //     auto mp = landmark.second;
+    //     VertexXYZ* v = new VertexXYZ();
+    //     v->setId(mp->id_ + max_kf_id + 1); // ensure unique id
+    //     v->setEstimate(mp->Pos());
+    //     optimizer.addVertex(v);
+    //     vertices_landmark.insert({mp->id_, v});
+    // }
+    
+    // K 和左右外参
+    Eigen::Matrix3d K = camera_left_->K();
+    Sophus::SE3d left_ext = camera_left_->pose();
+    Sophus::SE3d right_ext = camera_left_->pose();
+    
+    // add edges
+    int index = 1;
+    double chi2_th = 5.991; // 95% threshold for chi2 with 2 DOF
+    std::map<EdgeProjection *, Feature::Ptr> edges_and_features;
+
+    for (auto &landmark : landmarks)
+    {
+        if (landmark.second->is_outlier_)
+            continue;
+        unsigned long landmark_id = landmark.second->id_;
+        auto mp = landmark.second;
+        auto obs = mp->GetObs();
+        for (auto &weak_feature : obs)
+        {
+            auto feature = weak_feature.lock();
+            if (feature == nullptr || feature->is_outlier_)
+                continue;
+            auto kf = feature->frame_.lock();
+            if (kf == nullptr)
+                continue;
+            EdgeProjection* edge = nullptr;
+            if (feature->is_on_left_) {
+                edge = new EdgeProjection(K, left_ext);
+            } else {
+                edge = new EdgeProjection(K, right_ext);
+            }
+
+            // add landmark vertex if not yet added
+            if (vertices_landmark.find(landmark_id) == vertices_landmark.end())
+            {
+                VertexXYZ* v = new VertexXYZ();
+                v->setId(mp->id_ + max_kf_id + 1); // ensure unique id
+                v->setEstimate(mp->Pos());
+                v->setMarginalized(true);
+                vertices_landmark.insert({mp->id_, v});
+                optimizer.addVertex(v);
+            }
+
+            if (vertices.find(kf->keyframe_id_) != vertices.end()
+                && vertices_landmark.find(mp->id_) != vertices_landmark.end())
+            {
+
+                edge->setId(index);
+                edge->setVertex(0, vertices.at(kf->keyframe_id_));
+                edge->setVertex(1, vertices_landmark.at(landmark_id));
+                edge->setMeasurement(toVec2(feature->position_.pt));
+                edge->setInformation(Eigen::Matrix2f::Identity());
+                auto rk = new g2o::RobustKernelHuber();
+                rk->setDelta(chi2_th);
+                edge->setRobustKernel(rk);
+                edges_and_features.insert({edge, feature});
+                optimizer.addEdge(edge);
+                index++;
+            }
+            else delete edge;
+            
+        }
+    }
+
+    // do optimization and eliminate the outliers
+    optimizer.initializeOptimization();
+    optimizer.optimize(10);
+
+    int cnt_outlier = 0, cnt_inlier = 0;
+    int iteration = 0;
+    while (iteration < 5) {
+        cnt_outlier = 0;
+        cnt_inlier = 0;
+        // determine if we want to adjust the outlier threshold
+        for (auto &ef : edges_and_features) {
+            if (ef.first->chi2() > chi2_th) {
+                cnt_outlier++;
+            } else {
+                cnt_inlier++;
+            }
+        }
+        double inlier_ratio = cnt_inlier / double(cnt_inlier + cnt_outlier);
+        if (inlier_ratio > 0.5) {
+            break;
+        } else {
+            chi2_th *= 2;
+            iteration++;
+        }
+    }
+
+    for (auto &ef : edges_and_features) {
+        if (ef.first->chi2() > chi2_th) {
+            ef.second->is_outlier_ = true;
+            // remove the observation
+            ef.second->map_point_.lock()->RemoveObservation(ef.second);
+        } else {
+            ef.second->is_outlier_ = false;
+        }
+    }
+
+    LOG(INFO) << "Outlier/Inlier in optimization: " << cnt_outlier << "/"
+              << cnt_inlier;
+
+    // Set pose and lanrmark position
+    for (auto &v : vertices) {
+        keyframes.at(v.first)->SetPose(v.second->estimate());
+    }
+    for (auto &v : vertices_landmark) {
+        landmarks.at(v.first)->SetPos(v.second->estimate());
+    }
+}

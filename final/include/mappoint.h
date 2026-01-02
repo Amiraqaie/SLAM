@@ -30,7 +30,7 @@ public:
         return pos_;        
     }
 
-    void SetPos(Eigen::Vector3d &p) {
+    void SetPos(const Eigen::Vector3d &p) {
         std::unique_lock<std::mutex> lck(data_mutex_);
         pos_ = p;
     }
