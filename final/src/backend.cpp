@@ -24,6 +24,17 @@ void Backend::Stop()
     backend_thread_.join();
 }
 
+void Backend::BackendLoop() {
+    while (backend_running_.load()) {
+        std::unique_lock<std::mutex> lock(data_mutex_);
+        map_update_.wait(lock);
+
+        Map::KeyframesType active_kfs = map_->GetActiveKeyFrames();
+        Map::LandmarksType active_landmarks = map_->GetActiveMapPoints();
+        Optimize(active_kfs, active_landmarks);
+    }
+}
+
 void Backend::Optimize(Map::KeyframesType& keyframes, 
                        Map::LandmarksType& landmarks)
 {
@@ -52,19 +63,8 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
 
     // add vertices for mappoints
     std::unordered_map<unsigned long, VertexXYZ*> vertices_landmark;
-    // for (auto &landmark : landmarks)
-    // {
-    //     if (landmark.second->is_outlier_)
-    //         continue;
-    //     auto mp = landmark.second;
-    //     VertexXYZ* v = new VertexXYZ();
-    //     v->setId(mp->id_ + max_kf_id + 1); // ensure unique id
-    //     v->setEstimate(mp->Pos());
-    //     optimizer.addVertex(v);
-    //     vertices_landmark.insert({mp->id_, v});
-    // }
     
-    // K 和左右外参
+    // K
     Eigen::Matrix3d K = camera_left_->K();
     Sophus::SE3d left_ext = camera_left_->pose();
     Sophus::SE3d right_ext = camera_left_->pose();
@@ -115,7 +115,7 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
                 edge->setVertex(0, vertices.at(kf->keyframe_id_));
                 edge->setVertex(1, vertices_landmark.at(landmark_id));
                 edge->setMeasurement(toVec2(feature->position_.pt));
-                edge->setInformation(Eigen::Matrix2f::Identity());
+                edge->setInformation(Eigen::Matrix2d::Identity());
                 auto rk = new g2o::RobustKernelHuber();
                 rk->setDelta(chi2_th);
                 edge->setRobustKernel(rk);

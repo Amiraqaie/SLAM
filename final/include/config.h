@@ -11,7 +11,7 @@ private:
 
     Config() {}
 public:
-    ~Config() {}
+    ~Config();
 
     static bool SetParameterFile(const std::string& filename);
 
