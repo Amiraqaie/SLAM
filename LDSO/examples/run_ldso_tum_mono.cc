@@ -5,6 +5,13 @@
 #include <cstring>
 #include <glog/logging.h>
 #include <thread>
+#include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
+#include <sys/time.h>
+// #include "frontend/FullSystem.h"
+// #include "DatasetReader.h"
+
 // TODO : add includes libraries
 // TODO : add includes full system
 // TODO : add parsing functions
@@ -428,7 +435,50 @@ int main(int argc, char** argv)
     */
 
     // this is the main loop which runs on a separate thread
-    std::thread runthread([&]() {});
+    std::thread runthread([&]() {
+
+        std::vector<int> idsToPlay;
+        std::vector<double> timesToPlayAt;
+        
+
+        /*  TODO : create data feeder prepare correct timestamps for each image
+        for (int i = lstart; i >= 0 && i < reader->getNumImages() && linc * i < linc * lend; i += linc)
+        {
+            idsToPlay.push_back(i);
+            if (timesToPlayAt.size() == 0)
+            {
+                timesToPlayAt.push_back(0);
+            }
+            else
+            {
+                double tsThis = reader->getTimestamp(idsToPlay[idsToPlay.size() - 1]);
+                double tsPrev = reader->getTimestamp(idsToPlay[idsToPlay.size() - 2]);
+                timesToPlayAt.push_back(timesToPlayAt.back() + fabs(tsThis - tsPrev) / playbackSpeed);
+            }
+        }
+        */
+        
+        /*  TODO : preload images if needed
+        std::vector<ImageAndExposure> preloadedImages;
+        if (preload)
+        {
+            LOG(INFO) << "PRELOADING IMAGES INTO MEMORY!" << endl;
+            for (size_t ii = 0; ii < idsToPlay.size(); ii++)
+            {
+                int i = idsToPlay[ii];
+                preloadedImages.push_back(reader->getImage(i));
+            }
+        }
+        */
+
+        // Start a stopwatch to measure performance of the run
+        struct timeval tv_start;
+        gettimeofday(&tv_start, NULL);
+        clock_t started = clock();
+        double sInitializerOffset = 0;
+        
+
+    });
     
 
     /*
