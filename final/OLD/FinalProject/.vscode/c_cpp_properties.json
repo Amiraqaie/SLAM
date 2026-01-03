@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/opencv4",
+                "/home/amir/ImageProcessing/KITTY/FinalProject/include/"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}
