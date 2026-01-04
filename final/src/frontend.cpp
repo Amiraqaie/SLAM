@@ -88,7 +88,7 @@ bool Frontend::InsertKeyFrame() {
     map_->InsertKeyFrame(current_frame_);
     LOG(INFO) << "Insert a new keyframe " << current_frame_->keyframe_id_
               << ", total keyframes: " << map_->GetAllKeyFrames().size();
-    SetObservationsForKeyFrame();
+    // SetObservationsForKeyFrame();
     DetectFeatures();
     FindFeaturesInRight();
     TriangulateNewPoints();
