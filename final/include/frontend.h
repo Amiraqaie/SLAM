@@ -10,14 +10,30 @@
 
 namespace myslam {
 
+#pragma once
+#ifndef FRONTEND_H
+#define FRONTEND_H
+
+#include <opencv2/features2d.hpp>
+
+#include "common_include.h"
+#include "frame.h"
+#include "map.h"
+
 class Backend;
 class Viewer;
 
-enum class FrontendStatus { INITING, TRACKING_GOOD, TRACKING_BAD, LOST };
+enum class FrontendStatus {
+    INITING,
+    TRACKING_GOOD,
+    TRACKING_BAD,
+    LOST
+};
 
 class Frontend {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
     typedef std::shared_ptr<Frontend> Ptr;
 
     Frontend();
@@ -32,37 +48,36 @@ public:
 
     FrontendStatus GetStatus() const { return status_; }
 
-    void SetCameras(Camera::Ptr left, Camera::Ptr right) {
+    void SetCameras(const Camera::Ptr left, const Camera::Ptr right) {
         camera_left_ = left;
         camera_right_ = right;
     }
 private:
-
-    bool Reset();
     bool Track();
-    bool InsertKeyframe();
-    int TriangulateNewPoints();
-    int EstimateCurrentPose();
-    void SetObservationsForKeyFrame();
+    bool Reset();
     int TrackLastFrame();
+    int EstimateCurrentPose();
+    bool InsertKeyFrame();
     bool StereoInit();
-    bool BuildInitMap();
-    int FindFeaturesInRight();
     int DetectFeatures();
-    int ComputeDescriptorsLeft();
-    
-    FrontendStatus status_ = FrontendStatus::INITING;
+    int FindFeaturesInRight();
+    bool BuildInitMap();
+    int TriangulateNewPoints();
+    void SetObservationsForKeyFrame();
 
-    Frame::Ptr current_frame_ = nullptr;  
-    Frame::Ptr last_frame_ = nullptr;    
-    Camera::Ptr camera_left_ = nullptr;   
-    Camera::Ptr camera_right_ = nullptr;  
+
+    // data members
+    FrontendStatus status_ = FrontendStatus::INITING;
+    Frame::Ptr current_frame_ = nullptr;
+    Frame::Ptr last_frame_ = nullptr;
+    Camera::Ptr camera_left_ = nullptr;
+    Camera::Ptr camera_right_ = nullptr;
 
     Map::Ptr map_ = nullptr;
     std::shared_ptr<Backend> backend_ = nullptr;
     std::shared_ptr<Viewer> viewer_ = nullptr;
 
-    SE3 relative_motion_;  
+    Sophus::SE3d relative_motion_;  // T_last_current
 
     int tracking_inliers_ = 0;
 
@@ -70,12 +85,14 @@ private:
     int num_features_ = 200;
     int num_features_init_ = 100;
     int num_features_tracking_ = 50;
-    int num_features_tracking_bad_ = 20;
-    int num_features_needed_for_keyframe_ = 80;
+    int num_features_bad_ = 20;
+    int num_features_for_keyframe_ = 80;
 
-    // utilities
-    cv::Ptr<cv::GFTTDetector> gftt_;
+    cv::Ptr<cv::GFTTDetector> gftt_detector_;
 };
+
+
+#endif // FRONTEND_H
 
 }
 
