@@ -12,6 +12,11 @@
 #include "frame.h"
 #include "map.h"
 
+namespace myslam {
+
+/**
+ * 可视化
+ */
 class Viewer {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -23,8 +28,10 @@ class Viewer {
 
     void Close();
 
+    // 增加一个当前帧
     void AddCurrentFrame(Frame::Ptr current_frame);
 
+    // 更新地图
     void UpdateMap();
 
    private:
@@ -36,6 +43,7 @@ class Viewer {
 
     void FollowCurrentFrame(pangolin::OpenGlRenderState& vis_camera);
 
+    /// plot the features in current frame into an image
     cv::Mat PlotFrameImage();
 
     Frame::Ptr current_frame_ = nullptr;
@@ -50,5 +58,6 @@ class Viewer {
 
     std::mutex viewer_data_mutex_;
 };
+}  // namespace myslam
 
-#endif
+#endif  // MYSLAM_VIEWER_H

@@ -1,25 +1,10 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(AutSlam VERSION 0.1.0 LANGUAGES C CXX)
 
-# =====================
-# Build configuration
-# =====================
-# if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE  "-std=c++17 -O3 -fopenmp -pthread")
-
-# endif()
-
-# message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
-# set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_EXTENSIONS OFF)
-
-# # Warnings
-# add_compile_options(-Wall -Wextra -Wpedantic)
 
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -36,8 +21,6 @@ find_package(CSparse REQUIRED)
 include_directories(${CSPARSE_INCLUDE_DIR})
 find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
-find_package(G2O REQUIRED)
-include_directories(${G2O_INCLUDE_DIRS})
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 find_package(GFlags REQUIRED)

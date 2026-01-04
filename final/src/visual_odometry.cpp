@@ -1,6 +1,11 @@
+//
+// Created by gaoxiang on 19-5-4.
+//
 #include "visual_odometry.h"
 #include <chrono>
 #include "config.h"
+
+namespace myslam {
 
 VisualOdometry::VisualOdometry(std::string &config_path)
     : config_file_path_(config_path) {}
@@ -19,7 +24,8 @@ bool VisualOdometry::Init() {
     frontend_ = Frontend::Ptr(new Frontend);
     backend_ = Backend::Ptr(new Backend);
     map_ = Map::Ptr(new Map);
-    viewer_ = Viewer::Ptr(new Viewer);
+    // viewer_ = Viewer::Ptr(new Viewer);
+    viewer_ = nullptr;
 
     frontend_->SetBackend(backend_);
     frontend_->SetMap(map_);
@@ -29,7 +35,7 @@ bool VisualOdometry::Init() {
     backend_->SetMap(map_);
     backend_->SetCameras(dataset_->GetCamera(0), dataset_->GetCamera(1));
 
-    viewer_->SetMap(map_);
+    // viewer_->SetMap(map_);
 
     return true;
 }
@@ -43,6 +49,8 @@ void VisualOdometry::Run() {
     }
 
     backend_->Stop();
+    std::string a;
+    std::cin >> a;
     viewer_->Close();
 
     LOG(INFO) << "VO exit";
@@ -60,3 +68,5 @@ bool VisualOdometry::Step() {
     LOG(INFO) << "VO cost time: " << time_used.count() << " seconds.";
     return success;
 }
+
+}  // namespace myslam

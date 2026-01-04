@@ -1,7 +1,3 @@
-//
-// Created by gaoxiang on 19-5-2.
-//
-
 #ifndef MYSLAM_BACKEND_H
 #define MYSLAM_BACKEND_H
 
@@ -12,11 +8,6 @@
 namespace myslam {
 class Map;
 
-/**
- * 后端
- * 有单独优化线程，在Map更新时启动优化
- * Map更新由前端触发
- */ 
 class Backend {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -50,6 +41,6 @@ private:
     Camera::Ptr cam_left_ = nullptr, cam_right_ = nullptr;
 };
 
-}  // namespace myslam
+}
 
-#endif  // MYSLAM_BACKEND_H
+#endif

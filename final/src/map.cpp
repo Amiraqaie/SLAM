@@ -1,6 +1,26 @@
+/*
+ * <one line to give the program's name and a brief idea of what it does.>
+ * Copyright (C) 2016  <copyright holder> <email>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "map.h"
 #include "feature.h"
 
+namespace myslam {
 
 void Map::InsertKeyFrame(Frame::Ptr frame) {
     current_frame_ = frame;
@@ -29,6 +49,7 @@ void Map::InsertMapPoint(MapPoint::Ptr map_point) {
 
 void Map::RemoveOldKeyframe() {
     if (current_frame_ == nullptr) return;
+    // 寻找与当前帧最近与最远的两个关键帧
     double max_dis = 0, min_dis = 9999;
     double max_kf_id = 0, min_kf_id = 0;
     auto Twc = current_frame_->Pose().inverse();
@@ -45,15 +66,18 @@ void Map::RemoveOldKeyframe() {
         }
     }
 
-    const double min_dis_th = 0.2;
+    const double min_dis_th = 0.2;  // 最近阈值
     Frame::Ptr frame_to_remove = nullptr;
     if (min_dis < min_dis_th) {
+        // 如果存在很近的帧，优先删掉最近的
         frame_to_remove = keyframes_.at(min_kf_id);
     } else {
+        // 删掉最远的
         frame_to_remove = keyframes_.at(max_kf_id);
     }
 
     LOG(INFO) << "remove keyframe " << frame_to_remove->keyframe_id_;
+    // remove keyframe and landmark observation
     active_keyframes_.erase(frame_to_remove->keyframe_id_);
     for (auto feat : frame_to_remove->features_left_) {
         auto mp = feat->map_point_.lock();
@@ -85,3 +109,5 @@ void Map::CleanMap() {
     }
     LOG(INFO) << "Removed " << cnt_landmark_removed << " active landmarks";
 }
+
+}  // namespace myslam

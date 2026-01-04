@@ -1,7 +1,3 @@
-//
-// Created by gaoxiang on 19-5-4.
-//
-
 #include <gflags/gflags.h>
 #include "visual_odometry.h"
 

@@ -41,24 +41,21 @@ void Backend::BackendLoop() {
 
 void Backend::Optimize(Map::KeyframesType &keyframes,
                        Map::LandmarksType &landmarks) {
-    // setup g2o
     typedef g2o::BlockSolver_6_3 BlockSolverType;
     typedef g2o::LinearSolverCSparse<BlockSolverType::PoseMatrixType>
         LinearSolverType;
-    // typedef g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType>
-    // LinearSolverType;
+
     auto solver = new g2o::OptimizationAlgorithmLevenberg(
         std::make_unique<BlockSolverType>(
             std::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
 
-    // pose 顶点，使用Keyframe id
     std::map<unsigned long, VertexPose *> vertices;
     unsigned long max_kf_id = 0;
     for (auto &keyframe : keyframes) {
         auto kf = keyframe.second;
-        VertexPose *vertex_pose = new VertexPose();  // camera vertex_pose
+        VertexPose *vertex_pose = new VertexPose();
         vertex_pose->setId(kf->keyframe_id_);
         vertex_pose->setEstimate(kf->Pose());
         optimizer.addVertex(vertex_pose);

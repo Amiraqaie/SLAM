@@ -6,12 +6,15 @@
 #include "frame.h"
 #include "mappoint.h"
 
+namespace myslam {
+
 class Map {
-   public:
+public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     typedef std::shared_ptr<Map> Ptr;
     typedef std::unordered_map<unsigned long, MapPoint::Ptr> LandmarksType;
     typedef std::unordered_map<unsigned long, Frame::Ptr> KeyframesType;
+
 
     Map() {}
 
@@ -37,9 +40,24 @@ class Map {
         return active_keyframes_;
     }
 
+    Frame::Ptr GetLastKeyFrame() {
+        std::unique_lock<std::mutex> lck(data_mutex_);
+        return current_frame_;
+    }
+
+
+    Frame::Ptr GetByKeyFrameId(unsigned long id) {
+        std::unique_lock<std::mutex> lck(data_mutex_);
+        auto iter = keyframes_.find(id);
+        if (iter != keyframes_.end()) {
+            return iter->second;
+        }
+        return nullptr;
+    }
+
     void CleanMap();
 
-   private:
+private:
     void RemoveOldKeyframe();
 
     std::mutex data_mutex_;
@@ -50,7 +68,9 @@ class Map {
 
     Frame::Ptr current_frame_ = nullptr;
 
+    // settings
     int num_active_keyframes_ = 7; 
 };
+}  // namespace myslam
 
-#endif 
+#endif  // MAP_H

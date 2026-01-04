@@ -1,10 +1,12 @@
-// #ifdef BACKEND_H
-#define BACKEND_H
+#ifndef MYSLAM_BACKEND_H
+#define MYSLAM_BACKEND_H
 
 #include "common_include.h"
 #include "frame.h"
 #include "map.h"
 
+namespace myslam {
+class Map;
 
 class Backend {
 public:
@@ -13,33 +15,32 @@ public:
 
     Backend();
 
-    void SetCameras(Camera::Ptr left, Camera::Ptr right)
-    {
-        camera_left_ = left;
-        camera_right_ = right;
+    void SetCameras(Camera::Ptr left, Camera::Ptr right) {
+        cam_left_ = left;
+        cam_right_ = right;
     }
 
-    void SetMap(Map::Ptr map) { map_ = map; }
+    void SetMap(std::shared_ptr<Map> map) { map_ = map; }
 
     void UpdateMap();
 
     void Stop();
 
 private:
-
     void BackendLoop();
 
     void Optimize(Map::KeyframesType& keyframes, Map::LandmarksType& landmarks);
 
-    Map::Ptr map_ = nullptr;
+    std::shared_ptr<Map> map_;
     std::thread backend_thread_;
     std::mutex data_mutex_;
 
     std::condition_variable map_update_;
     std::atomic<bool> backend_running_;
 
-    Camera::Ptr camera_left_ = nullptr;
-    Camera::Ptr camera_right_ = nullptr;
+    Camera::Ptr cam_left_ = nullptr, cam_right_ = nullptr;
 };
 
-// #endif  // BACKEND_H
+}
+
+#endif

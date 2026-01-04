@@ -1,16 +1,16 @@
-#include <mappoint.h>
-#include <feature.h>
+#include "mappoint.h"
+#include "feature.h"
 
-MapPoint::MapPoint() {}
+namespace myslam {
 
-MapPoint::MapPoint(unsigned long id, Eigen::Vector3d p)
-    : id_(id), pos_(p) {}
+MapPoint::MapPoint(long id, Vec3 position) : id_(id), pos_(position) {}
 
-// void MapPoints::RemoveObservation(std::shared_ptr<Feature> feature) {
-//     std::unique_lock<std::mutex> lck(data_mutex_);
-//     observations_.remove(feature);
-//     observed_times_--;
-// }
+MapPoint::Ptr MapPoint::CreateNewMappoint() {
+    static long factory_id = 0;
+    MapPoint::Ptr new_mappoint(new MapPoint);
+    new_mappoint->id_ = factory_id++;
+    return new_mappoint;
+}
 
 void MapPoint::RemoveObservation(std::shared_ptr<Feature> feat) {
     std::unique_lock<std::mutex> lck(data_mutex_);
@@ -25,9 +25,4 @@ void MapPoint::RemoveObservation(std::shared_ptr<Feature> feat) {
     }
 }
 
-MapPoint::Ptr MapPoint::CreateNewMappoint() {
-    static unsigned long factory_id = 0;
-    MapPoint::Ptr new_mappoint(new MapPoint);
-    new_mappoint->id_ = factory_id++;
-    return new_mappoint;
-}
+}  // namespace myslam
