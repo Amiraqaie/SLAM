@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <sys/time.h>
+#include <cmath>
 // #include "frontend/FullSystem.h"
 // #include "DatasetReader.h"
 
@@ -477,7 +478,116 @@ int main(int argc, char** argv)
         clock_t started = clock();
         double sInitializerOffset = 0;
         
+        // Here is the main loop of the VSLAM system
+        for (int ii = 0; ii < (int) idsToPlay.size(); ii++)
+        {
+            while (setting_pause == true)
+            {
+                usleep(5000);
+            }
 
+            if (!fullSystem->initialized)
+            {
+                gettimeofday(&tv_start, NULL);
+                started = clock();
+                sInitializerOffset = timesToPlayAt[ii];
+            }
+
+            int i = idsToPlay[ii];
+            
+            ImageAndExposure *image; // The main data type for image
+            if (preload)
+            {
+                img = preloadedImages[ii];
+            }
+            else
+            {
+                img = reader->getImage(i);
+            }
+
+            bool skipFrame = false;
+            if(playbackSpeed != 0)
+            {
+                struct timeval tv_now;
+                gettimeofday(&tv_now, NULL);
+                double sSinceStart = sInitializerOffset + ((tv_now.tv_sec - tv_start.tv_sec) + (tv_now.tv_usec - tv_start.tv_usec) / (1000.0f * 1000.0f));
+                if (sSinceStart < timesToPlayAt[ii])
+                {
+                    // usleep((int) ((timesToPlayAt[ii] - sSinceStart) * 1000 * 1000));
+
+                }
+                else if (sSinceStart > timesToPlayAt[ii] + 0.5 + 0.1 * (ii % 2))
+                {
+                    cout << "SKIPFRAME " << ii << "(play at " << timesToPlayAt[ii] << " ,now it is " << sSinceStart << ")!" << endl;
+                skipFrame = true;
+                }   
+            }
+
+            if (!skipFrame)
+            {
+                // here the "magic" is happening
+                fullSystem->addActiveFrame(img, i);
+            }
+            delete img;
+        }
+
+        // TODO : fullSystem->blockUntilMappingFinished();
+
+        // Stop the stopwatch
+        clock_t ended = clock();
+        struct timeval tv_end;
+        gettimeofday(&tv_end, NULL);
+        
+
+        // helpfull logs
+        // TODO : fullSystem->printResult(output_file, true);  // true = save loop closing results too
+        // TODO : fullSystem->printResult(output_file + ".noloop", false);  // false = do not save loop closing results
+
+        int numFramesPrecessed = abs(idsToPlay[0] - idsToPlay.back());
+        double numSecondsProcessed = 1234.0; // TODO : fabs(reader->getTimestamp(idsToPlay[0]) - reader->getTimestamp(idsToPlay.back()));
+        double MilliSecondsTakenSingle = 1000.0f * (ended - started) / (float) (CLOCKS_PER_SEC);
+
+        double MilliSecondsTakenMT = sInitializerOffset + ((tv_end.tv_sec - tv_start.tv_sec) * 1000.0f + (tv_end.tv_usec - tv_start.tv_usec) / 1000.0f);
+        
+        cout 
+        << "======== Performance Summary ========" 
+        << endl
+        << endl
+        << endl
+        << endl
+        << endl
+        << endl
+        << endl;
+
+        LOG(INFO) << "Processed " << numFramesPrecessed << " frames in "
+                  << MilliSecondsTakenMT / 1000.0f << " s ("
+                  << 1000.0f * numFramesPrecessed / MilliSecondsTakenMT
+                  << " fps) , covering " << numSecondsProcessed << " s of video ("
+                  << 100.0f * numSecondsProcessed / (MilliSecondsTakenMT / 1000.0f)
+                  << " x real-time speed)." << endl;
+
+        cout 
+        << endl
+        << endl
+        << endl
+        << endl
+        << endl
+        << "======== Performance Summary ========" 
+        << endl;
+        
+        /* TODO : 
+        if(setting_logStuff)
+        {
+            std::ofstream tmlog;
+            tmlog.open("logs/time.txt", std::ios::trunc | std::ios::out);
+            tmlog << 1000.0f * (ended - started) / (float) (CLOCKS_PER_SEC) * reader->getNumImages() << " " 
+            << ((tv_end.tv_sec - tv_start.tv_sec) * 1000.0f + (tv_end.tv_usec - tv_start.tv_usec) / 1000.0f) / (float) reader->getNumImages() 
+            << std::endl;
+            
+            tmlog.flush();
+            tmlog.close();
+        }
+        */
     });
     
 
