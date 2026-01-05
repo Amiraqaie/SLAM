@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <cmath>
+#include <memory>
 // #include "frontend/FullSystem.h"
 // #include "DatasetReader.h"
 
@@ -349,7 +350,9 @@ void parseArgument(char* arg) {
 int main(int argc, char** argv)
 {    
     google::InitGoogleLogging(argv[0]);
-    bool FLAGS_colorlogtostderr = true;
+    FLAGS_logtostderr = 1;        // log to stderr instead of files
+    FLAGS_colorlogtostderr = 1;  // colored output
+    FLAGS_minloglevel = 0;       // INFO and above
 
     // parsing arguments
     for (int i = 1; i < argc; i++)
@@ -481,20 +484,25 @@ int main(int argc, char** argv)
         // Here is the main loop of the VSLAM system
         for (int ii = 0; ii < (int) idsToPlay.size(); ii++)
         {
+            /* TODO : 
             while (setting_pause == true)
             {
                 usleep(5000);
             }
+            */
 
+            /* TODO : 
             if (!fullSystem->initialized)
             {
                 gettimeofday(&tv_start, NULL);
                 started = clock();
                 sInitializerOffset = timesToPlayAt[ii];
             }
+            */
 
             int i = idsToPlay[ii];
             
+            /* TODO : 
             ImageAndExposure *image; // The main data type for image
             if (preload)
             {
@@ -504,6 +512,7 @@ int main(int argc, char** argv)
             {
                 img = reader->getImage(i);
             }
+            */
 
             bool skipFrame = false;
             if(playbackSpeed != 0)
@@ -523,12 +532,47 @@ int main(int argc, char** argv)
                 }   
             }
 
+
             if (!skipFrame)
             {
                 // here the "magic" is happening
+                /* TODO : 
                 fullSystem->addActiveFrame(img, i);
+                */
             }
+            /* TODO : 
             delete img;
+            */
+            
+            // cleaning up
+            /* TODO : 
+            if (fullSystem->initFailed || setting_fullResetRequested)
+            {
+                if (ii < 250 || setting_fullResetRequested)
+                {
+                    LOG(INFO) << "Init Failed, RESETTING!";
+                    fullSystem = shared_ptr<FullSystem>(new FullSystem(voc));
+                    fullSystem->setGammaFunction(reader->getPhotometricGamma());
+                    fullSystem->linearizeOperation = (playbackSpeed == 0);
+                    if (viewer)
+                    {
+                        viewer->reset();
+                        sleep(1);
+                        fullSystem->setViewer(viewer);
+                    }
+                    setting_fullResetRequire = false;
+                }
+            }
+            */
+
+            /* TODO : 
+            if (fullSystem->isLost)
+            {
+                LOG(INFO) << "LOST!!!";
+                break;
+            }
+            */
+
         }
 
         // TODO : fullSystem->blockUntilMappingFinished();
@@ -543,7 +587,8 @@ int main(int argc, char** argv)
         // TODO : fullSystem->printResult(output_file, true);  // true = save loop closing results too
         // TODO : fullSystem->printResult(output_file + ".noloop", false);  // false = do not save loop closing results
 
-        int numFramesPrecessed = abs(idsToPlay[0] - idsToPlay.back());
+        // TODO : (Segmentation fault)
+        int numFramesPrecessed = 100; // int numFramesPrecessed = abs(idsToPlay[0] - idsToPlay.back());
         double numSecondsProcessed = 1234.0; // TODO : fabs(reader->getTimestamp(idsToPlay[0]) - reader->getTimestamp(idsToPlay.back()));
         double MilliSecondsTakenSingle = 1000.0f * (ended - started) / (float) (CLOCKS_PER_SEC);
 
