@@ -11,15 +11,17 @@
 #include <sys/time.h>
 #include <cmath>
 #include <memory>
+
+// TODO : 
 // #include "frontend/FullSystem.h"
-// #include "DatasetReader.h"
+#include "DatasetReader.h"
 
 // TODO : add includes libraries
 // TODO : add includes full system
 // TODO : add parsing functions
 
 using namespace std;
-// TODO : using namespace ldso;
+using namespace ldso;
 
 // Flags
 string vignette;
