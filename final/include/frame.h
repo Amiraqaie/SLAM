@@ -27,11 +27,14 @@ public:
 
     std::vector<std::shared_ptr<Feature>> features_left_;
     std::vector<std::shared_ptr<Feature>> features_right_;
+    std::vector<cv::KeyPoint> orb_keypoints_;
+    cv::Mat orb_descriptors_;
 
+    
 public:
     Frame() {}
     Frame(long id, double time_stamp, const Sophus::SE3d &pose, const cv::Mat &left, const cv::Mat &right);
-
+    
     Sophus::SE3d Pose() {
         std::unique_lock<std::mutex> lck(pose_mutex_);
         return pose_;
@@ -41,9 +44,9 @@ public:
         std::unique_lock<std::mutex> lck(pose_mutex_);
         pose_ = pose;
     }
-
+    
     void SetKeyFrame();
-
+    
     static std::shared_ptr<Frame> CreateFrame();
 };
 
