@@ -40,7 +40,7 @@ public:
     typedef std::shared_ptr<LoopClosing> Ptr;
     
     
-    LoopClosing() {}
+    LoopClosing();
     ~LoopClosing();
     
     // Set components
@@ -64,7 +64,7 @@ private:
     std::vector<Frame::Ptr> DetectLoopCandidates(Frame::Ptr current_frame);
     
     // Triangulate the extracted orb feature in left and right image of frame
-    std::vector<Vec3> LoopClosing::TriangulateORBPoints(Frame::Ptr frame);
+    std::vector<Vec3> TriangulateORBPoints(Frame::Ptr frame);
 
     // Verify loop closure through geometric verification
     bool VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,

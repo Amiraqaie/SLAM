@@ -80,7 +80,7 @@ void LoopClosing::LoopDetectionThread() {
         
         // Detect loop candidates
         auto candidates = DetectLoopCandidates(current_keyframe);
-        
+        std::cout << "candidates size = " << candidates.size() << std::endl;
         // Verify loop closures
         for (auto candidate : candidates) {
             /// TODO : releative position should be calculated
@@ -127,9 +127,33 @@ std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_fra
     std::vector<Frame::Ptr> candidates;
     std::vector<std::pair<double, Frame::Ptr>> similarity_scores;
     
-    // Compare with frames that are far enough in time
+    std::vector<std::pair<double, myslam::Frame::Ptr>> clossest_keyframes_database;
     for (size_t i = 0; i < keyframe_database_.size(); ++i) {
         auto candidate = keyframe_database_[i];
+        Sophus::SE3d estimated_distance =  current_frame->Pose().inverse() * candidate->Pose();
+        double distance = estimated_distance.translation().norm();
+        clossest_keyframes_database.push_back({distance, candidate});
+    }
+    // Sort by distance
+    std::sort(clossest_keyframes_database.begin(), clossest_keyframes_database.end(), [](auto& a, auto& b){
+        return a.first < b.first;
+    });
+
+    std::vector<myslam::Frame::Ptr> top10_keyframes;
+
+    int count = 0;
+    for (auto it = clossest_keyframes_database.begin(); it != clossest_keyframes_database.end() && count < 10; ++it, ++count) {
+        top10_keyframes.push_back(it->second);
+    }
+
+    // Optional: print their IDs
+    for (auto& kf : top10_keyframes) {
+        std::cout << "Top candidate KF ID: " << kf->keyframe_id_ << std::endl;
+    }
+
+    // Compare with frames that are far enough in time
+    for (size_t i = 0; i < top10_keyframes.size(); ++i) {
+        auto candidate = top10_keyframes[i];
         
         // Skip recent frames
         // TODO :  why 1->2 and 4->0 are detected as candidate
@@ -138,6 +162,7 @@ std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_fra
         }
         
         double similarity = ComputeVisualSimilarity(current_frame, candidate);
+        // std::cout << "Similarity Between : KF" << current_frame->keyframe_id_ << " AND KF" << candidate->keyframe_id_ << " is equal to = " << similarity << std::endl;
         if (similarity > visual_similarity_threshold_) {
             similarity_scores.push_back(std::make_pair(similarity, candidate));
         }
@@ -161,9 +186,7 @@ double LoopClosing::ComputeVisualSimilarity(Frame::Ptr frame1, Frame::Ptr frame2
         return 0.0;
     }
     
-    std::vector<cv::DMatch> matches;
-    matcher_->match(frame1->orb_descriptors_, frame2->orb_descriptors_, matches);
-    
+    std::vector<cv::DMatch> matches = MatchFeatures(frame1, frame2);    
     if (matches.empty()) return 0.0;
     
     // Filter good matches
@@ -180,7 +203,23 @@ double LoopClosing::ComputeVisualSimilarity(Frame::Ptr frame1, Frame::Ptr frame2
     // Similarity based on ratio of good matches
     double similarity = double(num_good_matches) / std::max(frame1->orb_keypoints_.size(), 
                                                            frame2->orb_keypoints_.size());
-    return std::min(similarity, 1.0);
+    cv::Mat match_result;
+    cv::drawMatches(frame1->left_img_, frame1->orb_keypoints_, frame2->left_img_, frame2->orb_keypoints_, matches, match_result);
+    static double max_similarity = 0;
+    double clipped_similarity = std::min(similarity, 1.0);
+    max_similarity = std::max(clipped_similarity, max_similarity);
+    std::string window_name = "Similarity Checking !!! ";
+    std::string explanation = std::to_string(clipped_similarity) + "Max similarity Was = " + std::to_string(max_similarity);
+    std::string ids_exp = "id current : " + std::to_string(frame1->keyframe_id_);
+    // Draw text on match_result
+    cv::putText(match_result, explanation, cv::Point(20, 30), 
+                cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 1);
+    cv::putText(match_result, ids_exp, cv::Point(20, 100), 
+                cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 1);    
+    cv::imshow(window_name, match_result);
+    cv::waitKey(1);
+    // cv::destroyWindow(window_name);
+    return clipped_similarity;
 }
 
 bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
@@ -418,7 +457,6 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
 
     return true;
 }
-
 
 bool LoopClosing::SolveRANSAC(const std::vector<cv::Point3f>& pts1,
                               const std::vector<cv::Point3f>& pts2,
