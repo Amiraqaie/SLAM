@@ -1,6 +1,6 @@
-#include "loop_closing.h"
 #include "algorithm.h"
 #include "config.h"
+#include "loop_closing.h"
 
 namespace myslam {
 
@@ -82,6 +82,8 @@ void LoopClosing::LoopDetectionThread() {
         
         // Verify loop closures
         for (auto candidate : candidates) {
+            /// TODO : releative position should be calculated
+            // relative_pose = T_kf1_kf2
             SE3 relative_pose;
             Mat66 information;
             
@@ -99,8 +101,10 @@ void LoopClosing::LoopDetectionThread() {
                 
                 LOG(INFO) << "Loop closure detected between keyframes " 
                          << current_keyframe->keyframe_id_ << " and " 
-                         << candidate->keyframe_id_;
-                
+                         << candidate->keyframe_id_
+                         << "  Relative Position : "
+                         << relative_pose.translation().norm() << std::endl;
+
                 break;  // Only one loop per keyframe
             }
         }
@@ -127,6 +131,7 @@ std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_fra
         auto candidate = keyframe_database_[i];
         
         // Skip recent frames
+        // TODO :  why 1->2 and 4->0 are detected as candidate
         if (current_frame->keyframe_id_ - candidate->keyframe_id_ < min_loop_interval_) {
             continue;
         }

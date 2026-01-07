@@ -13,3 +13,10 @@ camera.cy: 249.7
 num_features: 150
 num_features_init: 50
 num_features_tracking: 50
+
+# loop closure parameters
+loop.visual_similarity_threshold: 0.7
+loop.min_loop_interval:  10
+loop.ransac_iterations: 1000
+loop.ransac_threshold: 0.02
+loop.min_inliers: 20

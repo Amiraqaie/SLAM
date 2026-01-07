@@ -71,9 +71,9 @@ namespace myslam
                 DrawFrame(current_frame_, green);
                 FollowCurrentFrame(vis_camera);
 
-                cv::Mat img = PlotFrameImage();
-                cv::imshow("image", img);
-                cv::waitKey(1);
+                // cv::Mat img = PlotFrameImage();
+                // cv::imshow("image", img);
+                // cv::waitKey(1);
             }
 
             if (map_)

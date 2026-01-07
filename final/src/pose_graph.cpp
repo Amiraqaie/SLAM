@@ -111,7 +111,8 @@ void PoseGraphOptimization::AddOdometryEdges(g2o::SparseOptimizer& optimizer) {
         auto kf2 = sorted_keyframes[i].second;
         
         // Compute relative pose between consecutive keyframes
-        SE3 relative_pose = kf2->Pose() * kf1->Pose().inverse();
+        // T_kf1_kf2
+        SE3 relative_pose = kf1->Pose().inverse() * kf2->Pose();
         
         // Create SE3 edge
         g2o::EdgeSE3* edge = new g2o::EdgeSE3();
@@ -130,6 +131,21 @@ void PoseGraphOptimization::AddOdometryEdges(g2o::SparseOptimizer& optimizer) {
         edge->setInformation(information);
         
         optimizer.addEdge(edge);
+
+        // Print odometry edge info
+        const auto& t = relative_iso.translation();
+        Eigen::Quaterniond q(relative_iso.rotation());
+
+        LOG(INFO) << "[OdomEdge] "
+                << "KF " << kf1->keyframe_id_
+                << " -> " << kf2->keyframe_id_
+                << " | t = [" << t.transpose() << "]"
+                << " | q = [" << q.w() << ", "
+                                << q.x() << ", "
+                                << q.y() << ", "
+                                << q.z() << "]";
+
+        LOG(INFO) << "[OdomEdge] Information:\n" << information;
     }
     
     LOG(INFO) << "Added " << edge_count << " odometry edges to pose graph";
@@ -164,6 +180,21 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         
         LOG(INFO) << "Added loop closure edge between keyframes " 
                  << constraint.keyframe1_id << " and " << constraint.keyframe2_id;
+
+        // Print loopclosure edge info
+        const auto& t = relative_iso.translation();
+        Eigen::Quaterniond q(relative_iso.rotation());
+
+        LOG(INFO) << "[OdomEdge] "
+                << "KF " << constraint.keyframe1_id
+                << " -> " << constraint.keyframe2_id
+                << " | t = [" << t.transpose() << "]"
+                << " | q = [" << q.w() << ", "
+                                << q.x() << ", "
+                                << q.y() << ", "
+                                << q.z() << "]";
+
+        LOG(INFO) << "[OdomEdge] Information:\n" << constraint.information;
     }
 }
 
@@ -209,6 +240,7 @@ void PoseGraphOptimization::UpdateMapAfterOptimization() {
     }
     
     // Correct map point positions
+    /// TODO : after the pose graph optimization the backend will adjust last 7 poses again to the before of pose graph optimization
     CorrectMapPointPositions();
     
     LOG(INFO) << "Map updated after pose graph optimization";
