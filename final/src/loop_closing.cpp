@@ -329,66 +329,6 @@ std::vector<Vec3> LoopClosing::TriangulateORBPoints(Frame::Ptr frame) {
     return pts3d;
 }
 
-
-/* Previous Estimate Relative pose had logical issues
-bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
-const std::vector<cv::DMatch>& matches,
-SE3& relative_pose, Mat66& information) {
-    if (matches.size() < static_cast<size_t>(min_inliers_)) {
-        return false;
-    }
-    
-    // Prepare 3D points for pose estimation
-    std::vector<cv::Point3f> pts1, pts2;
-    
-    for (const auto& match : matches) {
-        // Get 3D points from map points associated with features
-        int idx1 = match.queryIdx;
-        int idx2 = match.trainIdx;
-        
-        if (idx1 >= (int)frame1->features_left_.size() || idx2 >= (int)frame2->features_left_.size()) {
-            continue;
-        }
-        
-        auto mp1 = frame1->features_left_[idx1]->map_point_.lock();
-        auto mp2 = frame2->features_left_[idx2]->map_point_.lock();
-        
-        if (!mp1 || !mp2) continue;
-        
-        Vec3 pos1 = mp1->Pos();
-        Vec3 pos2 = mp2->Pos();
-        
-        pts1.push_back(cv::Point3f(pos1[0], pos1[1], pos1[2]));
-        pts2.push_back(cv::Point3f(pos2[0], pos2[1], pos2[2]));
-    }
-    
-    if (pts1.size() < static_cast<size_t>(min_inliers_)) {
-        return false;
-    }
-    
-    // Solve for relative pose using RANSAC
-    std::vector<bool> inliers;
-    if (!SolveRANSAC(pts1, pts2, relative_pose, inliers)) {
-        return false;
-    }
-    
-    // Count inliers
-    int inlier_count = std::count(inliers.begin(), inliers.end(), true);
-    if (inlier_count < min_inliers_) {
-        return false;
-    }
-    
-    // Set information matrix based on inlier ratio
-    double inlier_ratio = double(inlier_count) / matches.size();
-    information = Mat66::Identity() * inlier_ratio * 100.0;  // Scale by confidence
-    
-    LOG(INFO) << "Loop verification successful with " << inlier_count 
-    << " inliers out of " << matches.size() << " matches";
-    
-    return true;
-}
-*/
-
 bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                                        const std::vector<cv::DMatch>& matches,
                                        SE3& relative_pose, Mat66& information) {
