@@ -1,6 +1,7 @@
+#include "loop_closing.h"
 #include "algorithm.h"
 #include "config.h"
-#include "loop_closing.h"
+#include <opencv2/core/eigen.hpp>
 
 namespace myslam {
 
@@ -75,7 +76,7 @@ void LoopClosing::LoopDetectionThread() {
         keyframe_database_.push_back(current_keyframe);
         
         // Skip loop detection for early keyframes
-        if (keyframe_database_.size() < min_loop_interval_) continue;
+        if (keyframe_database_.size() < static_cast<size_t>(min_loop_interval_)) continue;
         
         // Detect loop candidates
         auto candidates = DetectLoopCandidates(current_keyframe);
@@ -132,7 +133,7 @@ std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_fra
         
         // Skip recent frames
         // TODO :  why 1->2 and 4->0 are detected as candidate
-        if (current_frame->keyframe_id_ - candidate->keyframe_id_ < min_loop_interval_) {
+        if (current_frame->keyframe_id_ - candidate->keyframe_id_ < static_cast<size_t>(min_loop_interval_)) {
             continue;
         }
         
@@ -187,10 +188,6 @@ bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candida
     // Match features between frames
     auto matches = MatchFeatures(current_frame, candidate_frame);
     
-    if (matches.size() < min_inliers_) {
-        return false;
-    }
-    
     // Estimate relative pose
     return EstimateRelativePose(current_frame, candidate_frame, matches, 
                                relative_pose, information);
@@ -214,10 +211,91 @@ std::vector<cv::DMatch> LoopClosing::MatchFeatures(Frame::Ptr frame1, Frame::Ptr
     return matches;
 }
 
+std::vector<cv::DMatch> LoopClosing::MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2) {
+    std::vector<cv::DMatch> matches;
+    std::vector<std::vector<cv::DMatch>> knn_matches;
+
+    matcher_->knnMatch(descriptors1, descriptors2, 
+                      knn_matches, 2);
+    
+    // Lowe's ratio test
+    const float ratio_thresh = 0.7f;
+    for (size_t i = 0; i < knn_matches.size(); i++) {
+        if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance) {
+            matches.push_back(knn_matches[i][0]);
+        }
+    }
+    
+    return matches;
+}
+
+std::vector<Vec3> LoopClosing::TriangulateORBPoints(Frame::Ptr frame) {
+    std::vector<Vec3> pts3d;
+
+    // Step 1: Extract ORB features in the right image
+    std::vector<cv::KeyPoint> keypoints_right;
+    cv::Mat descriptors_right;
+    orb_extractor_->detectAndCompute(frame->right_img_, cv::Mat(), keypoints_right, descriptors_right);
+
+    if (keypoints_right.empty()) {
+        LOG(WARNING) << "No ORB features found in right image!";
+        return pts3d;
+    }
+
+    // Step 2: Match left and right ORB descriptors using KNN + ratio test
+    std::vector<cv::DMatch> good_matches = MatchFeatures(frame->orb_descriptors_, descriptors_right);
+
+    if (good_matches.empty()) {
+        LOG(WARNING) << "No good matches between left and right ORB features!";
+        return pts3d;
+    }
+
+    // Step 3: Prepare matched points
+    std::vector<cv::Point2f> pts_left, pts_right;
+    for (auto& m : good_matches) {
+        pts_left.push_back(frame->orb_keypoints_[m.queryIdx].pt);
+        pts_right.push_back(keypoints_right[m.trainIdx].pt);
+    }
+
+    // Step 4: Projection matrices
+    cv::Mat K = (cv::Mat_<double>(3,3) << camera_->fx_, 0, camera_->cx_,
+                                           0, camera_->fy_, camera_->cy_,
+                                           0, 0, 1);
+
+    cv::Mat P_left  = cv::Mat::zeros(3,4,CV_64F);
+    cv::Mat P_right = cv::Mat::zeros(3,4,CV_64F);
+    K.copyTo(P_left(cv::Rect(0,0,3,3)));  // [K|0]
+    cv::Mat T = (cv::Mat_<double>(3,1) << -camera_->baseline_, 0, 0);
+    K.copyTo(P_right(cv::Rect(0,0,3,3)));
+    T.copyTo(P_right.col(3));             // [K|K*t]
+
+    // Step 5: Triangulate
+    cv::Mat pts4d_hom;
+    cv::triangulatePoints(P_left, P_right, pts_left, pts_right, pts4d_hom);
+
+    // Step 6: Convert to Vec3
+    pts3d.reserve(pts4d_hom.cols);
+    for (int i = 0; i < pts4d_hom.cols; ++i) {
+        double w = pts4d_hom.at<double>(3,i);
+        if (w == 0) {
+            pts3d.push_back(Vec3(0,0,0));
+            continue;
+        }
+        double x = pts4d_hom.at<double>(0,i) / w;
+        double y = pts4d_hom.at<double>(1,i) / w;
+        double z = pts4d_hom.at<double>(2,i) / w;
+        pts3d.push_back(Vec3(x,y,z));
+    }
+
+    return pts3d;
+}
+
+
+/* Previous Estimate Relative pose had logical issues
 bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
-                                      const std::vector<cv::DMatch>& matches,
-                                      SE3& relative_pose, Mat66& information) {
-    if (matches.size() < min_inliers_) {
+const std::vector<cv::DMatch>& matches,
+SE3& relative_pose, Mat66& information) {
+    if (matches.size() < static_cast<size_t>(min_inliers_)) {
         return false;
     }
     
@@ -229,7 +307,7 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
         int idx1 = match.queryIdx;
         int idx2 = match.trainIdx;
         
-        if (idx1 >= frame1->features_left_.size() || idx2 >= frame2->features_left_.size()) {
+        if (idx1 >= (int)frame1->features_left_.size() || idx2 >= (int)frame2->features_left_.size()) {
             continue;
         }
         
@@ -245,7 +323,7 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
         pts2.push_back(cv::Point3f(pos2[0], pos2[1], pos2[2]));
     }
     
-    if (pts1.size() < min_inliers_) {
+    if (pts1.size() < static_cast<size_t>(min_inliers_)) {
         return false;
     }
     
@@ -266,10 +344,81 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
     information = Mat66::Identity() * inlier_ratio * 100.0;  // Scale by confidence
     
     LOG(INFO) << "Loop verification successful with " << inlier_count 
-             << " inliers out of " << matches.size() << " matches";
+    << " inliers out of " << matches.size() << " matches";
     
     return true;
 }
+*/
+
+bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
+                                       const std::vector<cv::DMatch>& matches,
+                                       SE3& relative_pose, Mat66& information) {
+    if (matches.size() < static_cast<size_t>(min_inliers_))
+        return false;
+
+    // Step 1: Triangulate ORB features in frame1 using stereo
+    std::vector<Vec3> pts3d_frame1 = TriangulateORBPoints(frame1);
+
+    // Step 2: Prepare PnP correspondences
+    std::vector<cv::Point3f> objectPoints; // 3D points in frame1 (left cam)
+    std::vector<cv::Point2f> imagePoints;  // 2D points in frame2 (left image)
+
+    for (const auto& m : matches) {
+        int idx1 = m.queryIdx;  // left frame ORB index
+        int idx2 = m.trainIdx;  // right frame ORB index
+
+        if (idx1 >= pts3d_frame1.size() || idx2 >= frame2->orb_keypoints_.size())
+            continue;
+
+        Vec3 p3d = pts3d_frame1[idx1];
+        if (p3d[2] <= 0) continue; // ignore points behind camera
+
+        objectPoints.push_back(cv::Point3f(p3d[0], p3d[1], p3d[2]));
+        imagePoints.push_back(frame2->orb_keypoints_[idx2].pt);
+    }
+
+    if (objectPoints.size() < static_cast<size_t>(min_inliers_))
+        return false;
+
+    // Step 3: Solve PnP RANSAC
+    cv::Mat rvec, tvec;
+    std::vector<int> inliers;
+    cv::Mat K = (cv::Mat_<double>(3,3) << camera_->fx_, 0, camera_->cx_,
+                                           0, camera_->fy_, camera_->cy_,
+                                           0, 0, 1);
+
+    bool success = cv::solvePnPRansac(objectPoints, imagePoints, K, cv::Mat(),
+                                      rvec, tvec, false,
+                                      100,          // max iterations
+                                      8.0,          // reprojection error threshold in pixels
+                                      min_inliers_, // minimum inliers
+                                      inliers, cv::SOLVEPNP_ITERATIVE);
+
+    if (!success || inliers.size() < static_cast<size_t>(min_inliers_))
+        return false;
+
+    // Step 4: Convert rvec/tvec to SE3
+    cv::Mat R;
+    cv::Rodrigues(rvec, R); // 3x3 rotation matrix
+
+    Eigen::Matrix3d rot;
+    Eigen::Vector3d trans;
+    cv::cv2eigen(R, rot);
+    cv::cv2eigen(tvec, trans);
+
+    // relative_pose = T_kf1_kf2
+    relative_pose = SE3(rot, trans);
+
+    // Step 5: Set information matrix proportional to inlier ratio
+    double inlier_ratio = double(inliers.size()) / objectPoints.size();
+    information = Mat66::Identity() * inlier_ratio * 100.0;
+
+    LOG(INFO) << "Loop verification successful with " << inliers.size()
+              << " inliers out of " << objectPoints.size() << " matches";
+
+    return true;
+}
+
 
 bool LoopClosing::SolveRANSAC(const std::vector<cv::Point3f>& pts1,
                               const std::vector<cv::Point3f>& pts2,

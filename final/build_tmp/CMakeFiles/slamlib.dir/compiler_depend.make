@@ -4738,8 +4738,8 @@ CMakeFiles/slamlib.dir/src/frontend.cpp.o: ../src/frontend.cpp \
   /usr/include/glog/log_severity.h \
   /usr/include/glog/vlog_is_on.h \
   ../include/camera.h \
-  ../include/backend.h \
   ../include/frame.h \
+  ../include/backend.h \
   ../include/map.h \
   ../include/mappoint.h \
   ../include/config.h \
@@ -5058,7 +5058,7 @@ CMakeFiles/slamlib.dir/src/frontend.cpp.o: ../src/frontend.cpp \
 
 CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: ../src/loop_closing.cpp \
   /usr/include/stdc-predef.h \
-  ../include/algorithm.h \
+  ../include/loop_closing.h \
   ../include/common_include.h \
   /usr/include/c++/11/atomic \
   /usr/include/c++/11/bits/atomic_base.h \
@@ -5645,12 +5645,8 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: ../src/loop_closing.cpp \
   /usr/include/gflags/gflags_gflags.h \
   /usr/include/glog/log_severity.h \
   /usr/include/glog/vlog_is_on.h \
-  /usr/include/opencv4/opencv2/calib3d.hpp \
-  /usr/include/opencv4/opencv2/core/affine.hpp \
-  ../include/camera.h \
-  ../include/config.h \
-  ../include/loop_closing.h \
   ../include/frame.h \
+  ../include/camera.h \
   ../include/map.h \
   ../include/mappoint.h \
   ../include/feature.h \
@@ -5890,7 +5886,11 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: ../src/loop_closing.cpp \
   /usr/local/include/g2o/types/slam3d/edge_xyz_prior.h \
   /usr/local/include/g2o/types/slam3d/parameter_stereo_camera.h \
   /usr/include/c++/11/queue \
-  /usr/include/c++/11/bits/stl_queue.h
+  /usr/include/c++/11/bits/stl_queue.h \
+  ../include/algorithm.h \
+  /usr/include/opencv4/opencv2/calib3d.hpp \
+  /usr/include/opencv4/opencv2/core/affine.hpp \
+  ../include/config.h
 
 CMakeFiles/slamlib.dir/src/map.cpp.o: ../src/map.cpp \
   /usr/include/stdc-predef.h \
@@ -7913,8 +7913,11 @@ CMakeFiles/slamlib.dir/src/pose_graph.cpp.o: ../src/pose_graph.cpp \
   /usr/local/include/g2o/types/slam3d/edge_se3.h
 
 CMakeFiles/slamlib.dir/src/viewer.cpp.o: ../src/viewer.cpp \
+  /usr/include/stdc-predef.h
+
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: ../src/viewer_light.cpp \
   /usr/include/stdc-predef.h \
-  ../include/viewer.h \
+  ../include/viewer_light.h \
   /usr/include/c++/11/thread \
   /usr/include/c++/11/bits/std_thread.h \
   /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
@@ -9586,6 +9589,10 @@ CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o: ../src/visual_odometry.cpp \
 
 
 ../include/visual_odometry.h:
+
+../include/viewer_light.h:
+
+../src/viewer_light.cpp:
 
 ../include/pose_graph.h:
 

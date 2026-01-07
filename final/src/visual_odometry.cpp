@@ -24,8 +24,8 @@ bool VisualOdometry::Init() {
     frontend_ = Frontend::Ptr(new Frontend);
     backend_ = Backend::Ptr(new Backend);
     map_ = Map::Ptr(new Map);
-    // viewer_ = Viewer::Ptr(new Viewer);
-    viewer_ = nullptr;
+    viewer_ = Viewer::Ptr(new Viewer);
+    // viewer_ = nullptr;
     loop_closing_ = LoopClosing::Ptr(new LoopClosing);
     pose_graph_optimizer_ = PoseGraphOptimization::Ptr(new PoseGraphOptimization);
 
@@ -42,7 +42,7 @@ bool VisualOdometry::Init() {
     
     pose_graph_optimizer_->SetMap(map_);
 
-    // viewer_->SetMap(map_);
+    viewer_->SetMap(map_);
 
     return true;
 }

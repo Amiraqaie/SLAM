@@ -251,6 +251,20 @@ CMakeFiles/slamlib.dir/src/pose_graph.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/slamlib.dir/src/pose_graph.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/havaie/Codes/SLAM/final/src/pose_graph.cpp -o CMakeFiles/slamlib.dir/src/pose_graph.cpp.s
 
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: CMakeFiles/slamlib.dir/flags.make
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: ../src/viewer_light.cpp
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: CMakeFiles/slamlib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/slamlib.dir/src/viewer_light.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/slamlib.dir/src/viewer_light.cpp.o -MF CMakeFiles/slamlib.dir/src/viewer_light.cpp.o.d -o CMakeFiles/slamlib.dir/src/viewer_light.cpp.o -c /home/havaie/Codes/SLAM/final/src/viewer_light.cpp
+
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/slamlib.dir/src/viewer_light.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/havaie/Codes/SLAM/final/src/viewer_light.cpp > CMakeFiles/slamlib.dir/src/viewer_light.cpp.i
+
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/slamlib.dir/src/viewer_light.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/havaie/Codes/SLAM/final/src/viewer_light.cpp -o CMakeFiles/slamlib.dir/src/viewer_light.cpp.s
+
 # Object files for target slamlib
 slamlib_OBJECTS = \
 "CMakeFiles/slamlib.dir/src/camera.cpp.o" \
@@ -265,7 +279,8 @@ slamlib_OBJECTS = \
 "CMakeFiles/slamlib.dir/src/config.cpp.o" \
 "CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o" \
 "CMakeFiles/slamlib.dir/src/loop_closing.cpp.o" \
-"CMakeFiles/slamlib.dir/src/pose_graph.cpp.o"
+"CMakeFiles/slamlib.dir/src/pose_graph.cpp.o" \
+"CMakeFiles/slamlib.dir/src/viewer_light.cpp.o"
 
 # External object files for target slamlib
 slamlib_EXTERNAL_OBJECTS =
@@ -283,9 +298,10 @@ libslamlib.a: CMakeFiles/slamlib.dir/src/config.cpp.o
 libslamlib.a: CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o
 libslamlib.a: CMakeFiles/slamlib.dir/src/loop_closing.cpp.o
 libslamlib.a: CMakeFiles/slamlib.dir/src/pose_graph.cpp.o
+libslamlib.a: CMakeFiles/slamlib.dir/src/viewer_light.cpp.o
 libslamlib.a: CMakeFiles/slamlib.dir/build.make
 libslamlib.a: CMakeFiles/slamlib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX static library libslamlib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Linking CXX static library libslamlib.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/slamlib.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/slamlib.dir/link.txt --verbose=$(VERBOSE)
 

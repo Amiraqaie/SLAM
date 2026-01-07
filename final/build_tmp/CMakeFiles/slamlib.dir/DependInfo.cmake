@@ -20,6 +20,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/havaie/Codes/SLAM/final/src/mappoint.cpp" "CMakeFiles/slamlib.dir/src/mappoint.cpp.o" "gcc" "CMakeFiles/slamlib.dir/src/mappoint.cpp.o.d"
   "/home/havaie/Codes/SLAM/final/src/pose_graph.cpp" "CMakeFiles/slamlib.dir/src/pose_graph.cpp.o" "gcc" "CMakeFiles/slamlib.dir/src/pose_graph.cpp.o.d"
   "/home/havaie/Codes/SLAM/final/src/viewer.cpp" "CMakeFiles/slamlib.dir/src/viewer.cpp.o" "gcc" "CMakeFiles/slamlib.dir/src/viewer.cpp.o.d"
+  "/home/havaie/Codes/SLAM/final/src/viewer_light.cpp" "CMakeFiles/slamlib.dir/src/viewer_light.cpp.o" "gcc" "CMakeFiles/slamlib.dir/src/viewer_light.cpp.o.d"
   "/home/havaie/Codes/SLAM/final/src/visual_odometry.cpp" "CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o" "gcc" "CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o.d"
   )
 

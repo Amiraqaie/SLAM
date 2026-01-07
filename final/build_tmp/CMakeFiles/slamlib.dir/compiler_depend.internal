@@ -4745,8 +4745,8 @@ CMakeFiles/slamlib.dir/src/frontend.cpp.o
  /usr/include/glog/log_severity.h
  /usr/include/glog/vlog_is_on.h
  /home/havaie/Codes/SLAM/final/include/camera.h
- /home/havaie/Codes/SLAM/final/include/backend.h
  /home/havaie/Codes/SLAM/final/include/frame.h
+ /home/havaie/Codes/SLAM/final/include/backend.h
  /home/havaie/Codes/SLAM/final/include/map.h
  /home/havaie/Codes/SLAM/final/include/mappoint.h
  /home/havaie/Codes/SLAM/final/include/config.h
@@ -5066,7 +5066,7 @@ CMakeFiles/slamlib.dir/src/frontend.cpp.o
 CMakeFiles/slamlib.dir/src/loop_closing.cpp.o
  /home/havaie/Codes/SLAM/final/src/loop_closing.cpp
  /usr/include/stdc-predef.h
- /home/havaie/Codes/SLAM/final/include/algorithm.h
+ /home/havaie/Codes/SLAM/final/include/loop_closing.h
  /home/havaie/Codes/SLAM/final/include/common_include.h
  /usr/include/c++/11/atomic
  /usr/include/c++/11/bits/atomic_base.h
@@ -5653,12 +5653,8 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o
  /usr/include/gflags/gflags_gflags.h
  /usr/include/glog/log_severity.h
  /usr/include/glog/vlog_is_on.h
- /usr/include/opencv4/opencv2/calib3d.hpp
- /usr/include/opencv4/opencv2/core/affine.hpp
- /home/havaie/Codes/SLAM/final/include/camera.h
- /home/havaie/Codes/SLAM/final/include/config.h
- /home/havaie/Codes/SLAM/final/include/loop_closing.h
  /home/havaie/Codes/SLAM/final/include/frame.h
+ /home/havaie/Codes/SLAM/final/include/camera.h
  /home/havaie/Codes/SLAM/final/include/map.h
  /home/havaie/Codes/SLAM/final/include/mappoint.h
  /home/havaie/Codes/SLAM/final/include/feature.h
@@ -5899,6 +5895,10 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o
  /usr/local/include/g2o/types/slam3d/parameter_stereo_camera.h
  /usr/include/c++/11/queue
  /usr/include/c++/11/bits/stl_queue.h
+ /home/havaie/Codes/SLAM/final/include/algorithm.h
+ /usr/include/opencv4/opencv2/calib3d.hpp
+ /usr/include/opencv4/opencv2/core/affine.hpp
+ /home/havaie/Codes/SLAM/final/include/config.h
 
 CMakeFiles/slamlib.dir/src/map.cpp.o
  /home/havaie/Codes/SLAM/final/src/map.cpp
@@ -7926,7 +7926,11 @@ CMakeFiles/slamlib.dir/src/pose_graph.cpp.o
 CMakeFiles/slamlib.dir/src/viewer.cpp.o
  /home/havaie/Codes/SLAM/final/src/viewer.cpp
  /usr/include/stdc-predef.h
- /home/havaie/Codes/SLAM/final/include/viewer.h
+
+CMakeFiles/slamlib.dir/src/viewer_light.cpp.o
+ /home/havaie/Codes/SLAM/final/src/viewer_light.cpp
+ /usr/include/stdc-predef.h
+ /home/havaie/Codes/SLAM/final/include/viewer_light.h
  /usr/include/c++/11/thread
  /usr/include/c++/11/bits/std_thread.h
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h

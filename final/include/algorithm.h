@@ -2,8 +2,9 @@
 #define MYSLAM_ALGORITHM_H
 
 #include "common_include.h"
+#include "camera.h"
+#include "frame.h"
 #include <opencv2/calib3d.hpp>
-#include <camera.h>
 
 namespace myslam
 {
@@ -32,6 +33,7 @@ namespace myslam
     inline Eigen::Vector2d toVec2(const cv::Point2f p) { return Eigen::Vector2d(p.x, p.y); }
 
 }
+
 
 #endif // MYSLAM_ALGORITHM_H
 

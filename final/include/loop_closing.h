@@ -39,7 +39,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     typedef std::shared_ptr<LoopClosing> Ptr;
     
-    LoopClosing();
+    
+    LoopClosing() {}
     ~LoopClosing();
     
     // Set components
@@ -62,6 +63,9 @@ private:
     // Detect loop candidates using visual similarity
     std::vector<Frame::Ptr> DetectLoopCandidates(Frame::Ptr current_frame);
     
+    // Triangulate the extracted orb feature in left and right image of frame
+    std::vector<Vec3> LoopClosing::TriangulateORBPoints(Frame::Ptr frame);
+
     // Verify loop closure through geometric verification
     bool VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
                           SE3& relative_pose, Mat66& information);
@@ -74,7 +78,8 @@ private:
     
     // Perform feature matching between two frames
     std::vector<cv::DMatch> MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2);
-    
+    std::vector<cv::DMatch> MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2);
+
     // Estimate relative pose using matched features
     bool EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                              const std::vector<cv::DMatch>& matches,

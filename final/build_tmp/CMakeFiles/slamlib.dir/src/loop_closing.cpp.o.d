@@ -1,7 +1,7 @@
 CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: \
  /home/havaie/Codes/SLAM/final/src/loop_closing.cpp \
  /usr/include/stdc-predef.h \
- /home/havaie/Codes/SLAM/final/include/algorithm.h \
+ /home/havaie/Codes/SLAM/final/include/loop_closing.h \
  /home/havaie/Codes/SLAM/final/include/common_include.h \
  /usr/include/c++/11/atomic /usr/include/c++/11/bits/atomic_base.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
@@ -504,12 +504,9 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: \
  /usr/include/linux/close_range.h /usr/include/inttypes.h \
  /usr/include/gflags/gflags.h /usr/include/gflags/gflags_declare.h \
  /usr/include/gflags/gflags_gflags.h /usr/include/glog/log_severity.h \
- /usr/include/glog/vlog_is_on.h /usr/include/opencv4/opencv2/calib3d.hpp \
- /usr/include/opencv4/opencv2/core/affine.hpp \
- /home/havaie/Codes/SLAM/final/include/camera.h \
- /home/havaie/Codes/SLAM/final/include/config.h \
- /home/havaie/Codes/SLAM/final/include/loop_closing.h \
+ /usr/include/glog/vlog_is_on.h \
  /home/havaie/Codes/SLAM/final/include/frame.h \
+ /home/havaie/Codes/SLAM/final/include/camera.h \
  /home/havaie/Codes/SLAM/final/include/map.h \
  /home/havaie/Codes/SLAM/final/include/mappoint.h \
  /home/havaie/Codes/SLAM/final/include/feature.h \
@@ -728,4 +725,8 @@ CMakeFiles/slamlib.dir/src/loop_closing.cpp.o: \
  /usr/local/include/g2o/types/slam3d/edge_se3_xyzprior.h \
  /usr/local/include/g2o/types/slam3d/edge_xyz_prior.h \
  /usr/local/include/g2o/types/slam3d/parameter_stereo_camera.h \
- /usr/include/c++/11/queue /usr/include/c++/11/bits/stl_queue.h
+ /usr/include/c++/11/queue /usr/include/c++/11/bits/stl_queue.h \
+ /home/havaie/Codes/SLAM/final/include/algorithm.h \
+ /usr/include/opencv4/opencv2/calib3d.hpp \
+ /usr/include/opencv4/opencv2/core/affine.hpp \
+ /home/havaie/Codes/SLAM/final/include/config.h

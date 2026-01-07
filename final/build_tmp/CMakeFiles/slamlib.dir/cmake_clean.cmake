@@ -23,6 +23,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/slamlib.dir/src/pose_graph.cpp.o.d"
   "CMakeFiles/slamlib.dir/src/viewer.cpp.o"
   "CMakeFiles/slamlib.dir/src/viewer.cpp.o.d"
+  "CMakeFiles/slamlib.dir/src/viewer_light.cpp.o"
+  "CMakeFiles/slamlib.dir/src/viewer_light.cpp.o.d"
   "CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o"
   "CMakeFiles/slamlib.dir/src/visual_odometry.cpp.o.d"
   "libslamlib.a"

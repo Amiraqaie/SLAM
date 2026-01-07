@@ -454,6 +454,30 @@ src/viewer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/src/viewer.cpp.s
 .PHONY : src/viewer.cpp.s
 
+src/viewer_light.o: src/viewer_light.cpp.o
+.PHONY : src/viewer_light.o
+
+# target to build an object file
+src/viewer_light.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/src/viewer_light.cpp.o
+.PHONY : src/viewer_light.cpp.o
+
+src/viewer_light.i: src/viewer_light.cpp.i
+.PHONY : src/viewer_light.i
+
+# target to preprocess a source file
+src/viewer_light.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/src/viewer_light.cpp.i
+.PHONY : src/viewer_light.cpp.i
+
+src/viewer_light.s: src/viewer_light.cpp.s
+.PHONY : src/viewer_light.s
+
+# target to generate assembly for a file
+src/viewer_light.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/src/viewer_light.cpp.s
+.PHONY : src/viewer_light.cpp.s
+
 src/visual_odometry.o: src/visual_odometry.cpp.o
 .PHONY : src/visual_odometry.o
 
@@ -527,6 +551,9 @@ help:
 	@echo "... src/viewer.o"
 	@echo "... src/viewer.i"
 	@echo "... src/viewer.s"
+	@echo "... src/viewer_light.o"
+	@echo "... src/viewer_light.i"
+	@echo "... src/viewer_light.s"
 	@echo "... src/visual_odometry.o"
 	@echo "... src/visual_odometry.i"
 	@echo "... src/visual_odometry.s"

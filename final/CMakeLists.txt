@@ -57,7 +57,8 @@ add_library(slamlib
             src/config.cpp
             src/visual_odometry.cpp
             src/loop_closing.cpp
-            src/pose_graph.cpp)
+            src/pose_graph.cpp
+            src/viewer_light.cpp)
 
 
 target_link_libraries(slamlib
