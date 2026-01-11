@@ -1,0 +1,26 @@
+%YAML:1.0
+# data
+# the tum dataset directory, change it to yours! 
+# dataset_dir: /media/xiang/Data/Dataset/Kitti/dataset/sequences/00
+dataset_dir: /home/havaie/Codes/Dataset/KITTI/data_odometry_gray/dataset/sequences/06
+
+# camera intrinsics
+camera.fx: 517.3
+camera.fy: 516.5
+camera.cx: 325.1
+camera.cy: 249.7
+
+num_features: 150
+num_features_init: 50
+num_features_tracking: 50
+
+# Loop Closure Parameters
+loop.vocab_path : /home/havaie/Codes/SLAM/SLAM/vocab/orbvoc.dbow3
+loop.visual_similarity_threshold: 0.7
+loop.min_loop_interval: 10
+loop.ransac_iterations: 1000
+loop.ransac_threshold: 0.02
+loop.min_inliers: 20
+loop.check_frequency: 10
+loop.min_constraints_for_pgo: 3
+loop.show_result: 1

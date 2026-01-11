@@ -1,4 +1,0 @@
-/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles/slamlib.dir
-/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles/run_kitti_stereo.dir
-/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles/edit_cache.dir
-/home/havaie/Codes/SLAM/final/build_tmp/CMakeFiles/rebuild_cache.dir
