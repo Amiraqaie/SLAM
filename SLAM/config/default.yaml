@@ -2,7 +2,7 @@
 # data
 # the tum dataset directory, change it to yours! 
 # dataset_dir: /media/xiang/Data/Dataset/Kitti/dataset/sequences/00
-dataset_dir: /home/havaie/Codes/Dataset/KITTI/data_odometry_gray/dataset/sequences/06
+dataset_dir: /home/havaie/Codes/Dataset/KITTI/data_odometry_gray/dataset/sequences/00
 
 # camera intrinsics
 camera.fx: 517.3
@@ -16,7 +16,8 @@ num_features_tracking: 50
 
 # Loop Closure Parameters
 loop.vocab_path : /home/havaie/Codes/SLAM/SLAM/vocab/orbvoc.dbow3
-loop.visual_similarity_threshold: 0.7
+loop.visual_similarity_threshold: 3.0
+loop.dbow_query_size: 10.0
 loop.min_loop_interval: 10
 loop.ransac_iterations: 1000
 loop.ransac_threshold: 0.02

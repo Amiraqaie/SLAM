@@ -123,6 +123,7 @@ private:
     int ransac_iterations_ = 1000;
     double ransac_threshold_ = 0.02;  // 2cm
     int min_inliers_ = 20;
+    int dbow_query_size_ = 10.0;
     bool show_result_ = true;
 };
 

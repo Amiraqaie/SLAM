@@ -32,6 +32,7 @@ LoopClosing::LoopClosing() {
     ransac_iterations_ = Config::Get<int>("loop.ransac_iterations");
     ransac_threshold_ = Config::Get<double>("loop.ransac_threshold");
     min_inliers_ = Config::Get<int>("loop.min_inliers");
+    dbow_query_size_ = Config::Get<int>("loop.dbow_query_size");
     show_result_ = static_cast<bool>(Config::Get<int>("loop.show_result"));
 
     // Start loop detection thread
@@ -95,14 +96,17 @@ void LoopClosing::LoopDetectionThread() {
         
         // Detect loop candidates
         auto candidates = DetectLoopCandidates(current_keyframe);
-        if (show_result_)
+        
+        // show result of loop closure
+        if (show_result_ && candidates.size() > 0)
         {   
             cv::imshow("current keyframe", current_keyframe->left_img_);
-            cv::imshow("candidate with higher score", candidates[1]->left_img_);
+            cv::imshow("candidate with higher score", candidates[0]->left_img_);
         }
 
         // Verify loop closures
         for (auto candidate : candidates) {
+
             /// TODO : releative position should be calculated
             // relative_pose = T_kf1_kf2
             SE3 relative_pose;
@@ -171,127 +175,41 @@ std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_fra
     std::vector<Frame::Ptr> candidates;
     std::vector<std::pair<double, Frame::Ptr>> similarity_scores;
 
-    /* 
-    std::vector<std::pair<double, myslam::Frame::Ptr>> clossest_keyframes_database;
-    for (size_t i = 0; i < keyframe_database_.size(); ++i) {
-        auto candidate = keyframe_database_[i];
-        Sophus::SE3d estimated_distance =  current_frame->Pose().inverse() * candidate->Pose();
-        double distance = estimated_distance.translation().norm();
-        clossest_keyframes_database.push_back({distance, candidate});
-        }
-    // Sort by distance
-    std::sort(clossest_keyframes_database.begin(), clossest_keyframes_database.end(), [](auto& a, auto& b){
-        return a.first < b.first;
-    });
-
-    std::vector<myslam::Frame::Ptr> top10_keyframes;
-    
-    int count = 0;
-    for (auto it = clossest_keyframes_database.begin(); it != clossest_keyframes_database.end() && count < 10; ++it, ++count) {
-        top10_keyframes.push_back(it->second);
-    }
-
-    // Optional: print their IDs
-    for (auto& kf : top10_keyframes) {
-        std::cout << "Top candidate KF ID: " << kf->keyframe_id_ << std::endl;
-    }
-
-    // Compare with frames that are far enough in time
-    for (size_t i = 0; i < top10_keyframes.size(); ++i) {
-        auto candidate = top10_keyframes[i];
-        
-        // Skip recent frames
-        // TODO :  why 1->2 and 4->0 are detected as candidate
-        if (current_frame->keyframe_id_ - candidate->keyframe_id_ < static_cast<size_t>(min_loop_interval_)) {
-            continue;
-        }
-        
-        double similarity = ComputeVisualSimilarity(current_frame, candidate);
-        // std::cout << "Similarity Between : KF" << current_frame->keyframe_id_ << " AND KF" << candidate->keyframe_id_ << " is equal to = " << similarity << std::endl;
-        if (similarity > visual_similarity_threshold_) {
-            similarity_scores.push_back(std::make_pair(similarity, candidate));
-        }
-    }
-    
-    // Sort by similarity and return top candidates
-    std::sort(similarity_scores.begin(), similarity_scores.end(), 
-    std::greater<std::pair<double, Frame::Ptr>>());
-    
-    int max_candidates = 3;
-    for (int i = 0; i < std::min(max_candidates, (int)similarity_scores.size()); ++i) {
-        candidates.push_back(similarity_scores[i].second);
-    }
-    */
-   
-    // TODO : write a for loop to calculate similarity of the current frame with 
-    // all keyframe database frames and cout the results one-by-one
-
     // Get query of top four candidates
     DBoW3::QueryResults ret;
-    db_.query(current_frame->GetDescriptorsLeft(), ret, 4);
+    db_.query(current_frame->GetDescriptorsLeft(), ret, dbow_query_size_);
     std::cout << "searching for KeyFrame " << current_frame->keyframe_id_ << " returns " << ret << std::endl;
+    
+    // calculate similarity score with previous keyframe
+    double gt_score = ComputeVisualSimilarity(current_frame, keyframe_database_[current_frame->keyframe_id_ - 1]);
+
     for (auto result : ret)
     {
-        int id = result.Id;
-        candidates.push_back(keyframe_database_[id]);
-    }
+        if ((current_frame->keyframe_id_ - result.Id) > min_loop_interval_)
+        {
 
-    // // Show the results of candidates
-    // cv::imshow("current KeyFrame", current_frame->left_img_);
-    // std::string window_name = "Candidate ";
-    // cv::imshow(window_name, candidates[1]->left_img_);
-    // cv::waitKey(0);
+            double score = result.Score;
+            double similarity = score / gt_score;
+            if (similarity > visual_similarity_threshold_)
+            {
+                int id = result.Id;
+                candidates.push_back(keyframe_database_[id]);
+            }
+        }
+    }
 
     return candidates;
 }
 
 double LoopClosing::ComputeVisualSimilarity(Frame::Ptr frame1, Frame::Ptr frame2) {
 
-    double clipped_similarity = 0.0;
-
-    /*
-    // Simple bag-of-words similarity using descriptor matching
-    if (frame1->orb_descriptors_left_.empty() || frame2->orb_descriptors_left_.empty()) {
-        return 0.0;
-    }
-    
-    std::vector<cv::DMatch> matches = MatchFeatures(frame1, frame2);    
-    if (matches.empty()) return 0.0;
-    
-    // Filter good matches
-    std::sort(matches.begin(), matches.end());
-    int num_good_matches = 0;
-    double distance_threshold = matches[0].distance * 2.0;
-    
-    for (const auto& match : matches) {
-        if (match.distance < distance_threshold) {
-            num_good_matches++;
-        }
-    }
-    
-    // Similarity based on ratio of good matches
-    double similarity = double(num_good_matches) / std::max(frame1->features_left_.size(), 
-    frame2->features_left_.size());
-    cv::Mat match_result;
-    cv::drawMatches(frame1->left_img_, frame1->GetKeypointsLeft(), frame2->left_img_, frame2->GetKeypointsLeft(), matches, match_result);
-    static double max_similarity = 0;
-    clipped_similarity = std::min(similarity, 1.0);
-    max_similarity = std::max(clipped_similarity, max_similarity);
-    std::string window_name = "Similarity Checking !!! ";
-    std::string explanation = std::to_string(clipped_similarity) + "Max similarity Was = " + std::to_string(max_similarity);
-    std::string ids_exp = "id current : " + std::to_string(frame1->keyframe_id_);
-    // Draw text on match_result
-    cv::putText(match_result, explanation, cv::Point(20, 30), 
-    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 1);
-    cv::putText(match_result, ids_exp, cv::Point(20, 100), 
-    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 1);    
-    cv::imshow(window_name, match_result);
-    cv::waitKey(1);
-    // cv::destroyWindow(window_name);
-    */
-
-    // TODO : we must use dbow3 to calculate the similarity
-    return clipped_similarity;
+    // calculate similarity score with previous keyframe
+    DBoW3::BowVector frame1_vector;
+    vocab_.transform(frame1->GetDescriptorsLeft(), frame1_vector);
+    DBoW3::BowVector frame2_vector;
+    vocab_.transform(keyframe_database_[frame2->keyframe_id_ - 1]->GetDescriptorsLeft(), frame2_vector);
+    double score = vocab_.score(frame1_vector, frame2_vector);
+    return score;
 }
 
 bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
@@ -300,6 +218,7 @@ bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candida
     auto matches = MatchFeatures(current_frame, candidate_frame);
     
     // Estimate relative pose
+    // TODO :  we should add spacial loop consistency check to this pipline
     return EstimateRelativePose(current_frame, candidate_frame, matches, 
                                relative_pose, information);
 }
@@ -422,91 +341,5 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
     return true;
 }
 
-/* TODO : its better to move ransac solving in a seprate function (used in EstimateRelativePosition)
-bool LoopClosing::SolveRANSAC(const std::vector<cv::Point3f>& pts1,
-const std::vector<cv::Point3f>& pts2,
-SE3& pose, std::vector<bool>& inliers) {
-    if (pts1.size() < 3 || pts1.size() != pts2.size()) {
-        return false;
-    }
-    
-    int best_inliers = 0;
-    SE3 best_pose;
-    inliers.resize(pts1.size(), false);
-    
-    for (int iter = 0; iter < ransac_iterations_; ++iter) {
-        // Sample 3 random correspondences
-        std::vector<int> sample_indices;
-        for (int i = 0; i < 3; ++i) {
-            int idx;
-            do {
-                idx = rand() % pts1.size();
-            } while (std::find(sample_indices.begin(), sample_indices.end(), idx) != sample_indices.end());
-            sample_indices.push_back(idx);
-        }
-        
-        // Estimate pose from 3 point correspondences using Procrustes analysis
-        Eigen::Matrix3Xd P1(3, 3), P2(3, 3);
-        for (int i = 0; i < 3; ++i) {
-            P1.col(i) = Vec3(pts1[sample_indices[i]].x, pts1[sample_indices[i]].y, pts1[sample_indices[i]].z);
-            P2.col(i) = Vec3(pts2[sample_indices[i]].x, pts2[sample_indices[i]].y, pts2[sample_indices[i]].z);
-        }
-        
-        // Compute centroids
-        Vec3 c1 = P1.rowwise().mean();
-        Vec3 c2 = P2.rowwise().mean();
-        
-        // Center the point sets
-        P1.colwise() -= c1;
-        P2.colwise() -= c2;
-        
-        // Compute rotation using SVD
-        Eigen::Matrix3d H = P1 * P2.transpose();
-        Eigen::JacobiSVD<Eigen::Matrix3d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::Matrix3d R = svd.matrixV() * svd.matrixU().transpose();
-        
-        if (R.determinant() < 0) {
-            Eigen::Matrix3d V = svd.matrixV();
-            V.col(2) *= -1;
-            R = V * svd.matrixU().transpose();
-        }
-        
-        // Compute translation
-        Vec3 t = c2 - R * c1;
-        
-        SE3 candidate_pose(R, t);
-        
-        // Count inliers
-        int current_inliers = 0;
-        std::vector<bool> current_inlier_mask(pts1.size(), false);
-        
-        for (size_t i = 0; i < pts1.size(); ++i) {
-            Vec3 p1(pts1[i].x, pts1[i].y, pts1[i].z);
-            Vec3 p2(pts2[i].x, pts2[i].y, pts2[i].z);
-            
-            Vec3 p1_transformed = candidate_pose * p1;
-            double error = (p1_transformed - p2).norm();
-            
-            if (error < ransac_threshold_) {
-                current_inliers++;
-                current_inlier_mask[i] = true;
-            }
-        }
-        
-        if (current_inliers > best_inliers) {
-            best_inliers = current_inliers;
-            best_pose = candidate_pose;
-            inliers = current_inlier_mask;
-        }
-    }
-    
-    if (best_inliers >= min_inliers_) {
-        pose = best_pose;
-        return true;
-    }
-    
-    return false;
-}
-*/
 
 }  // namespace myslam
