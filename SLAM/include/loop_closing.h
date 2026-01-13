@@ -69,7 +69,7 @@ private:
     std::vector<Frame::Ptr> DetectLoopCandidates(Frame::Ptr current_frame);
     
     // Triangulate the extracted orb feature in left and right image of frame
-    std::vector<Vec3> TriangulateFeatures(Frame::Ptr frame);
+    std::map<int, Vec3> TriangulateFeatures(Frame::Ptr frame);
 
     // Verify loop closure through geometric verification
     bool VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
@@ -90,6 +90,8 @@ private:
                              const std::vector<cv::DMatch>& matches,
                              SE3& relative_pose, Mat66& information);
     
+    int EstimateCandidatePose(std::vector<cv::Point3d> &objectPoints, std::vector<cv::Point2d> &imagePoints, SE3& relative_pose);
+    
 private:
     Map::Ptr map_;
     Camera::Ptr camera_left_;
@@ -107,7 +109,7 @@ private:
     std::queue<Frame::Ptr> keyframe_queue_;
     
     // ORB feature extractor
-    cv::Ptr<cv::ORB> orb_extractor_;
+    cv::Ptr<cv::DescriptorExtractor> orb_extractor_;
     cv::Ptr<cv::DescriptorMatcher> matcher_;
     
     // Loop constraints storage
@@ -122,6 +124,7 @@ private:
     int min_loop_interval_ = 10;  // Minimum frames between loops
     int ransac_iterations_ = 1000;
     double ransac_threshold_ = 0.02;  // 2cm
+    double minimum_match_ratio_ = 0.4;
     int min_inliers_ = 20;
     int dbow_query_size_ = 10.0;
     bool show_result_ = true;

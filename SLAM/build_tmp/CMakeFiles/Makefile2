@@ -65,6 +65,7 @@ CMAKE_BINARY_DIR = /home/havaie/Codes/SLAM/SLAM/build_tmp
 # The main recursive "all" target.
 all: CMakeFiles/slamlib.dir/all
 all: CMakeFiles/run_kitti_stereo.dir/all
+all: CMakeFiles/orb_cv.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -74,6 +75,7 @@ preinstall:
 # The main recursive "clean" target.
 clean: CMakeFiles/slamlib.dir/clean
 clean: CMakeFiles/run_kitti_stereo.dir/clean
+clean: CMakeFiles/orb_cv.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -83,7 +85,7 @@ clean: CMakeFiles/run_kitti_stereo.dir/clean
 CMakeFiles/slamlib.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles --progress-num=3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 "Built target slamlib"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles --progress-num=5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 "Built target slamlib"
 .PHONY : CMakeFiles/slamlib.dir/all
 
 # Build rule for subdir invocation for target.
@@ -109,7 +111,7 @@ CMakeFiles/slamlib.dir/clean:
 CMakeFiles/run_kitti_stereo.dir/all: CMakeFiles/slamlib.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_kitti_stereo.dir/build.make CMakeFiles/run_kitti_stereo.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_kitti_stereo.dir/build.make CMakeFiles/run_kitti_stereo.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles --progress-num=1,2 "Built target run_kitti_stereo"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles --progress-num=3,4 "Built target run_kitti_stereo"
 .PHONY : CMakeFiles/run_kitti_stereo.dir/all
 
 # Build rule for subdir invocation for target.
@@ -127,6 +129,32 @@ run_kitti_stereo: CMakeFiles/run_kitti_stereo.dir/rule
 CMakeFiles/run_kitti_stereo.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_kitti_stereo.dir/build.make CMakeFiles/run_kitti_stereo.dir/clean
 .PHONY : CMakeFiles/run_kitti_stereo.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/orb_cv.dir
+
+# All Build rule for target.
+CMakeFiles/orb_cv.dir/all: CMakeFiles/slamlib.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles --progress-num=1,2 "Built target orb_cv"
+.PHONY : CMakeFiles/orb_cv.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/orb_cv.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles 17
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/orb_cv.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/havaie/Codes/SLAM/SLAM/build_tmp/CMakeFiles 0
+.PHONY : CMakeFiles/orb_cv.dir/rule
+
+# Convenience name for target.
+orb_cv: CMakeFiles/orb_cv.dir/rule
+.PHONY : orb_cv
+
+# clean rule for target.
+CMakeFiles/orb_cv.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/clean
+.PHONY : CMakeFiles/orb_cv.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

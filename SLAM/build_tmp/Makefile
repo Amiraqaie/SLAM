@@ -142,6 +142,19 @@ run_kitti_stereo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_kitti_stereo.dir/build.make CMakeFiles/run_kitti_stereo.dir/build
 .PHONY : run_kitti_stereo/fast
 
+#=============================================================================
+# Target rules for targets named orb_cv
+
+# Build rule for target.
+orb_cv: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 orb_cv
+.PHONY : orb_cv
+
+# fast build rule for target.
+orb_cv/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/build
+.PHONY : orb_cv/fast
+
 app/run_kitti_stereo.o: app/run_kitti_stereo.cpp.o
 .PHONY : app/run_kitti_stereo.o
 
@@ -406,6 +419,30 @@ src/mappoint.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/slamlib.dir/build.make CMakeFiles/slamlib.dir/src/mappoint.cpp.s
 .PHONY : src/mappoint.cpp.s
 
+src/orb_cv.o: src/orb_cv.cpp.o
+.PHONY : src/orb_cv.o
+
+# target to build an object file
+src/orb_cv.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/src/orb_cv.cpp.o
+.PHONY : src/orb_cv.cpp.o
+
+src/orb_cv.i: src/orb_cv.cpp.i
+.PHONY : src/orb_cv.i
+
+# target to preprocess a source file
+src/orb_cv.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/src/orb_cv.cpp.i
+.PHONY : src/orb_cv.cpp.i
+
+src/orb_cv.s: src/orb_cv.cpp.s
+.PHONY : src/orb_cv.s
+
+# target to generate assembly for a file
+src/orb_cv.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orb_cv.dir/build.make CMakeFiles/orb_cv.dir/src/orb_cv.cpp.s
+.PHONY : src/orb_cv.cpp.s
+
 src/pose_graph.o: src/pose_graph.cpp.o
 .PHONY : src/pose_graph.o
 
@@ -510,6 +547,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... orb_cv"
 	@echo "... run_kitti_stereo"
 	@echo "... slamlib"
 	@echo "... app/run_kitti_stereo.o"
@@ -545,6 +583,9 @@ help:
 	@echo "... src/mappoint.o"
 	@echo "... src/mappoint.i"
 	@echo "... src/mappoint.s"
+	@echo "... src/orb_cv.o"
+	@echo "... src/orb_cv.i"
+	@echo "... src/orb_cv.s"
 	@echo "... src/pose_graph.o"
 	@echo "... src/pose_graph.i"
 	@echo "... src/pose_graph.s"

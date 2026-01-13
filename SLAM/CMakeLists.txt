@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(AutSlam VERSION 0.1.0 LANGUAGES C CXX)
 
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -fopenmp -pthread")
+# set(CMAKE_CXX_FLAGS "-Wall")
+# set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -fopenmp -pthread")
 
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -72,3 +72,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable(run_kitti_stereo app/run_kitti_stereo.cpp)
 target_link_libraries(run_kitti_stereo slamlib ${THIRD_PARTY_LIBS})
+
+add_executable(orb_cv src/orb_cv.cpp)
+target_link_libraries(orb_cv slamlib ${THIRD_PARTY_LIBS})

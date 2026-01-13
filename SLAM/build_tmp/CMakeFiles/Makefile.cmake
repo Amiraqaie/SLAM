@@ -89,4 +89,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/slamlib.dir/DependInfo.cmake"
   "CMakeFiles/run_kitti_stereo.dir/DependInfo.cmake"
+  "CMakeFiles/orb_cv.dir/DependInfo.cmake"
   )

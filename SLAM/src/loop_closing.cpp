@@ -9,8 +9,7 @@ namespace myslam {
 
 LoopClosing::LoopClosing() {
     // Initialize ORB feature extractor
-    orb_extractor_ = cv::ORB::create(1000, 1.2f, 8, 31, 0, 2, 
-                                     cv::ORB::HARRIS_SCORE, 31, 20);
+    orb_extractor_ = cv::ORB::create();
     
     // Initialize feature matcher
     matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
@@ -33,6 +32,7 @@ LoopClosing::LoopClosing() {
     ransac_threshold_ = Config::Get<double>("loop.ransac_threshold");
     min_inliers_ = Config::Get<int>("loop.min_inliers");
     dbow_query_size_ = Config::Get<int>("loop.dbow_query_size");
+    minimum_match_ratio_ = Config::Get<double>("loop.minimum_match_ratio");
     show_result_ = static_cast<bool>(Config::Get<int>("loop.show_result"));
 
     // Start loop detection thread
@@ -97,27 +97,22 @@ void LoopClosing::LoopDetectionThread() {
         // Detect loop candidates
         auto candidates = DetectLoopCandidates(current_keyframe);
         
-        // show result of loop closure
-        if (show_result_ && candidates.size() > 0)
-        {   
-            cv::imshow("current keyframe", current_keyframe->left_img_);
-            cv::imshow("candidate with higher score", candidates[0]->left_img_);
-        }
-
+        
         // Verify loop closures
         for (auto candidate : candidates) {
-
+            
             /// TODO : releative position should be calculated
             // relative_pose = T_kf1_kf2
             SE3 relative_pose;
             Mat66 information;
             
             /* TODO : we must triangulate features in current_keyframe coordinate 
-                To pass it to pnp solver, if 3d positions of mappoint is in world
-                coordinate then pnp ransac will fail
-
-
-            if (VerifyLoopClosure(current_keyframe, candidate, relative_pose, information)) {
+            To pass it to pnp solver, if 3d positions of mappoint is in world
+            coordinate then pnp ransac will fail
+            */
+           
+           
+           if (VerifyLoopClosure(current_keyframe, candidate, relative_pose, information)) {
                 // Create loop constraint
                 double confidence = 1.0;  // Could be based on inlier ratio
                 LoopConstraint constraint(current_keyframe->keyframe_id_, 
@@ -137,31 +132,15 @@ void LoopClosing::LoopDetectionThread() {
 
                 break;  // Only one loop per keyframe
             }
-            */
         }
     }
 }
 
 void LoopClosing::ExtractORBDescriptors(Frame::Ptr frame) {
-    std::vector<cv::KeyPoint> keypoints_left;
-    std::vector<cv::KeyPoint> keypoints_right;
+    std::vector<cv::KeyPoint> keypoints_left = frame->GetKeypointsLeft();
+    std::vector<cv::KeyPoint> keypoints_right = frame->GetKeypointsRight();
     cv::Mat descriptors_left;
-    cv::Mat descriptors_right;
-    
-    for (Feature::Ptr feat : frame->features_left_)
-    {
-        if (!feat)
-            continue;
-        std::unique_lock<std::mutex> lck(frame->feature_mutex_);
-        keypoints_left.push_back(feat->position_);
-    }
-    for (Feature::Ptr feat : frame->features_right_)
-    {
-        if (!feat)
-            continue;
-        std::unique_lock<std::mutex> lck(frame->feature_mutex_);
-        keypoints_right.push_back(feat->position_);
-    }        
+    cv::Mat descriptors_right;    
 
     orb_extractor_->compute(frame->left_img_, keypoints_left, descriptors_left);
     orb_extractor_->compute(frame->left_img_, keypoints_right, descriptors_right);
@@ -217,6 +196,23 @@ bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candida
     // Match features between frames
     auto matches = MatchFeatures(current_frame, candidate_frame);
     
+    if (matches.size() < minimum_match_ratio_ * current_frame->features_left_.size())
+        return false;
+    
+    // show result of loop closure
+    if (show_result_)
+    {   
+        cv::Mat outImg;
+        cv::drawMatches(current_frame->left_img_, current_frame->GetKeypointsLeft(), candidate_frame->left_img_, candidate_frame->GetKeypointsLeft(), matches, outImg);
+        cv::imshow("matches", outImg);
+        std::string file_name1 = std::to_string(current_frame->id_) + "_" + std::to_string(candidate_frame->id_) + ".png";
+        std::string file_name2 = std::to_string(current_frame->id_) + ".png";
+        std::string file_name3 = std::to_string(candidate_frame->id_) + ".png";
+        cv::imwrite(file_name1, outImg);
+        cv::imwrite(file_name2, current_frame->left_img_);
+        cv::imwrite(file_name3, candidate_frame->left_img_);
+    }
+
     // Estimate relative pose
     // TODO :  we should add spacial loop consistency check to this pipline
     return EstimateRelativePose(current_frame, candidate_frame, matches, 
@@ -259,17 +255,43 @@ std::vector<cv::DMatch> LoopClosing::MatchFeatures(cv::Mat descriptors1, cv::Mat
     return matches;
 }
 
-std::vector<Vec3> LoopClosing::TriangulateFeatures(Frame::Ptr frame) {
-    std::vector<Vec3> pts3d;
-
+std::map<int, Vec3> LoopClosing::TriangulateFeatures(Frame::Ptr frame) {
+    
+    std::map<int, Vec3> triangulated_points;
+    
     if (frame->GetKeypointsLeft().empty() || frame->GetKeypointsRight().empty()) {
         LOG(WARNING) << "No ORB features found in right image!";
-        return pts3d;
+        return triangulated_points;
     }
 
+    // TODO : Check if feature have map point available
+    // then use them in camera coordinate as triangulated result
 
+    std::vector<Sophus::SE3d> poses{camera_left_->pose(), camera_right_->pose()};
+    size_t cnt_init_landmarks = 0;
+    for (size_t i = 0; i < frame->features_left_.size(); ++i) {
+        std::unique_lock<std::mutex> lck(frame->feature_mutex_);
+        if (frame->features_right_[i] == nullptr) continue;
+        // create map point from triangulation
+        std::vector<Eigen::Vector3d> points{
+            camera_left_->pixel2camera(
+                Eigen::Vector2d(frame->features_left_[i]->position_.pt.x,
+                     frame->features_left_[i]->position_.pt.y)),
+            camera_right_->pixel2camera(
+                Eigen::Vector2d(frame->features_right_[i]->position_.pt.x,
+                     frame->features_right_[i]->position_.pt.y))};
+        Eigen::Vector3d p_camera_left = Eigen::Vector3d::Zero();
 
-    return pts3d;
+        if (triangulation(poses, points, p_camera_left) && p_camera_left[2] > 0) {
+            triangulated_points.insert(std::make_pair((int)i, p_camera_left));
+            cnt_init_landmarks++;
+            // triangulated_points.insert(std::make_pair((int) (i+1), p_camera_left));
+        }
+    }
+
+    LOG(INFO) << "Loop Closure Triangulated " << cnt_init_landmarks << " 3D points";
+
+    return triangulated_points;
 }
 
 bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
@@ -279,23 +301,26 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
         return false;
 
     // Step 1: Triangulate ORB features in frame1 using stereo
-    std::vector<Vec3> pts3d_frame1 = TriangulateFeatures(frame1);
+    std::map<int, Vec3> pts3d_frame1 = TriangulateFeatures(frame1);
 
     // Step 2: Prepare PnP correspondences
-    std::vector<cv::Point3f> objectPoints; // 3D points in frame1 (left cam)
-    std::vector<cv::Point2f> imagePoints;  // 2D points in frame2 (left image)
+    std::vector<cv::Point3d> objectPoints; // 3D points in frame1 (left cam)
+    std::vector<cv::Point2d> imagePoints;  // 2D points in frame2 (left image)
 
     for (const auto& m : matches) {
-        int idx1 = m.queryIdx;  // left frame ORB index
-        int idx2 = m.trainIdx;  // right frame ORB index
+        int idx1 = m.queryIdx;  // left frame1 ORB index
+        int idx2 = m.trainIdx;  // left frame2 ORB index
 
-        if (idx1 >= pts3d_frame1.size() || idx2 >= frame2->GetKeypointsLeft().size())
+        if (idx1 >= (int) pts3d_frame1.size() || idx2 >= (int) frame2->GetKeypointsLeft().size())
             continue;
 
+        if (pts3d_frame1.find(idx1) == pts3d_frame1.end())
+            continue;
+        
         Vec3 p3d = pts3d_frame1[idx1];
         if (p3d[2] <= 0) continue; // ignore points behind camera
 
-        objectPoints.push_back(cv::Point3f(p3d[0], p3d[1], p3d[2]));
+        objectPoints.push_back(cv::Point3d(p3d[0], p3d[1], p3d[2]));
         imagePoints.push_back(frame2->GetKeypointsLeft()[idx2].pt);
     }
 
@@ -304,41 +329,129 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
 
     // Step 3: Solve PnP RANSAC
     cv::Mat rvec, tvec;
-    std::vector<int> inliers;
     cv::Mat K = (cv::Mat_<double>(3,3) << camera_left_->fx_, 0, camera_left_->cx_,
-                                           0, camera_left_->fy_, camera_left_->cy_,
-                                           0, 0, 1);
-
-    bool success = cv::solvePnPRansac(objectPoints, imagePoints, K, cv::Mat(),
-                                      rvec, tvec, false,
-                                      100,          // max iterations
-                                      8.0,          // reprojection error threshold in pixels
-                                      min_inliers_, // minimum inliers
-                                      inliers, cv::SOLVEPNP_ITERATIVE);
-
+    0, camera_left_->fy_, camera_left_->cy_,
+    0, 0, 1);
+    
+    std::cout << "objectPoints size : " << objectPoints.size() << std::endl;
+    std::cout << "imagePoints size : " << imagePoints.size() << std::endl;
+    
+    /* TODO : 
+    terminate called after throwing an instance of 'cv::Exception'
+    what():  OpenCV(4.5.4) ./modules/calib3d/src/ptsetreg.cpp:174: error: (-215:Assertion failed) confidence > 0 && confidence < 1 in function 'run'
+    bool success = cv::solvePnPRansac(objectPoints, imagePoints, K, cv::Mat(), rvec, tvec, false, 100, 8.0, min_inliers_, inliers, cv::SOLVEPNP_ITERATIVE);
+    
+    std::vector<int> inliers;
     if (!success || inliers.size() < static_cast<size_t>(min_inliers_))
-        return false;
-
+    return false;
+    
     // Step 4: Convert rvec/tvec to SE3
     cv::Mat R;
     cv::Rodrigues(rvec, R); // 3x3 rotation matrix
-
+    
     Eigen::Matrix3d rot;
     Eigen::Vector3d trans;
     cv::cv2eigen(R, rot);
     cv::cv2eigen(tvec, trans);
-
+    
     // relative_pose = T_kf1_kf2
     relative_pose = SE3(rot, trans);
-
+    */
+    
     // Step 5: Set information matrix proportional to inlier ratio
-    double inlier_ratio = double(inliers.size()) / objectPoints.size();
+    int inliers = EstimateCandidatePose(objectPoints, imagePoints, relative_pose);
+
+    double inlier_ratio = double(inliers) / objectPoints.size();
     information = Mat66::Identity() * inlier_ratio * 100.0;
 
-    LOG(INFO) << "Loop verification successful with " << inliers.size()
-              << " inliers out of " << objectPoints.size() << " matches";
+    LOG(INFO) << "Loop verification successful with " << inliers << " inliers out of " << objectPoints.size() << " matches";
 
     return true;
+}
+
+int LoopClosing::EstimateCandidatePose(std::vector<cv::Point3d> &objectPoints, std::vector<cv::Point2d> &imagePoints, SE3& relative_pose)
+{
+    typedef g2o::BlockSolver_6_3 BlockSolverType;
+    typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType>
+        LinearSolverType;
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(
+        std::make_unique<BlockSolverType>(
+            std::make_unique<LinearSolverType>()));
+    g2o::SparseOptimizer optimizer;
+    optimizer.setAlgorithm(solver);
+    optimizer.setVerbose(true);
+
+    // Vertex
+
+    VertexPose *vertex_pose = new VertexPose();
+    vertex_pose->setId(0);
+    vertex_pose->setEstimate(Sophus::SE3d());
+    optimizer.addVertex(vertex_pose);
+
+    // K 
+    Eigen::Matrix3d K = camera_left_->K();
+
+    // edges
+    int index = 1;
+    std::vector<EdgeProjectionPoseOnly *> edges;
+    std::vector<bool> imagePointsStatus;
+    for (cv::Point2d pt: imagePoints)
+    {
+        imagePointsStatus.push_back(false);
+    }
+
+    for (size_t i = 0; i < objectPoints.size(); i++) {
+        Eigen::Vector3d pos3d(objectPoints[i].x, objectPoints[i].y, objectPoints[i].z);
+        Eigen::Vector2d measurement(imagePoints[i].x, imagePoints[i].y);
+        auto edge = new EdgeProjectionPoseOnly(pos3d, K);
+        edge->setId(index);
+        edge->setVertex(0, vertex_pose);
+        edge->setMeasurement(measurement);
+        edge->setRobustKernel(new g2o::RobustKernelHuber);
+        edge->setInformation(Eigen::Matrix2d::Identity());
+        edges.push_back(edge);
+        optimizer.addEdge(edge);
+        index++;
+    }
+
+    // estimate the Pose the determine the outliers
+    const double chi2_th = 5.991;
+    int cnt_outlier = 0;
+    // for (int iteration = 0; iteration < 4; ++iteration) {
+    vertex_pose->setEstimate(Sophus::SE3d());
+    optimizer.initializeOptimization();
+    optimizer.optimize(10);
+    cnt_outlier = 0;
+
+        // // count the outliers
+        // for (size_t i = 0; i < edges.size(); ++i) {
+        //     auto e = edges[i];
+        //     if (imagePointsStatus[i]) {
+        //         e->computeError();
+        //     }
+        //     if (e->chi2() > chi2_th) {
+        //         imagePointsStatus[i] = true;
+        //         e->setLevel(1);
+        //         cnt_outlier++;
+        //     } else {
+        //         imagePointsStatus[i] = false;
+        //         e->setLevel(0);
+        //     };
+
+        //     if (iteration == 2) {
+        //         e->setRobustKernel(nullptr);
+        //     }
+        // }
+    // }
+
+    LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/"
+              << imagePointsStatus.size() - cnt_outlier;
+
+    relative_pose = vertex_pose->estimate();
+
+    LOG(INFO) << "Candidate Pose = \n" << vertex_pose->estimate().matrix();
+
+    return imagePointsStatus.size() - cnt_outlier;
 }
 
 
