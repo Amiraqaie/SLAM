@@ -114,8 +114,8 @@ int Frontend::TriangulateNewPoints() {
     std::vector<Sophus::SE3d> poses{camera_left_->pose(), camera_right_->pose()};
     Sophus::SE3d current_pose_Twc = current_frame_->Pose().inverse();
     int cnt_triangulated_pts = 0;
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         if (current_frame_->features_left_[i]->map_point_.expired() &&
             current_frame_->features_right_[i] != nullptr) {
             std::vector<Eigen::Vector3d> points{
@@ -172,8 +172,8 @@ int Frontend::EstimateCurrentPose()
     std::vector<EdgeProjectionPoseOnly *> edges;
     std::vector<Feature::Ptr> features;
 
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         auto mp = current_frame_->features_left_[i]->map_point_.lock();
         if (mp && !mp->is_outlier_) {
             features.push_back(current_frame_->features_left_[i]);
@@ -242,8 +242,8 @@ int Frontend::EstimateCurrentPose()
 int Frontend::TrackLastFrame() {
     // use LK flow to estimate points in the right image
     std::vector<cv::Point2f> kps_last, kps_current;
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (auto &kp : last_frame_->features_left_) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         if (kp->map_point_.lock()) {
             // use project point
             auto mp = kp->map_point_.lock();
@@ -303,8 +303,8 @@ bool Frontend::StereoInit() {
 
 int Frontend::DetectFeatures() {
     cv::Mat mask(current_frame_->left_img_.size(), CV_8UC1, 255);
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (auto &feat : current_frame_->features_left_) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         cv::rectangle(mask, feat->position_.pt - cv::Point2f(10, 10),
                       feat->position_.pt + cv::Point2f(10, 10), 0, cv::FILLED);
     }
@@ -325,8 +325,8 @@ int Frontend::DetectFeatures() {
 int Frontend::FindFeaturesInRight() {
     // use LK flow to estimate points in the right image
     std::vector<cv::Point2f> kps_left, kps_right;
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (auto &kp : current_frame_->features_left_) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         kps_left.push_back(kp->position_.pt);
         auto mp = kp->map_point_.lock();
         if (mp) {
@@ -368,8 +368,8 @@ int Frontend::FindFeaturesInRight() {
 bool Frontend::BuildInitMap() {
     std::vector<Sophus::SE3d> poses{camera_left_->pose(), camera_right_->pose()};
     size_t cnt_init_landmarks = 0;
+    std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
     for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
-        std::unique_lock<std::mutex> lck(current_frame_->feature_mutex_);
         if (current_frame_->features_right_[i] == nullptr) continue;
         // create map point from triangulation
         std::vector<Eigen::Vector3d> points{

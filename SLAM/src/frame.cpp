@@ -25,11 +25,11 @@ std::vector<cv::KeyPoint> Frame::GetKeypointsLeft()
 {
     std::vector<cv::KeyPoint> keypoints;
     
+    std::unique_lock<std::mutex> lck(feature_mutex_);
     for (Feature::Ptr feat : features_left_)
     {
         if (!feat)
             continue;
-        std::unique_lock<std::mutex> lck(feature_mutex_);
         keypoints.push_back(feat->position_);
     }
 
@@ -40,15 +40,33 @@ std::vector<cv::KeyPoint> Frame::GetKeypointsRight()
 {
     std::vector<cv::KeyPoint> keypoints;
     
+    std::unique_lock<std::mutex> lck(feature_mutex_);
     for (Feature::Ptr feat : features_left_)
     {
         if (!feat)
             continue;
-        std::unique_lock<std::mutex> lck(feature_mutex_);
         keypoints.push_back(feat->position_);
     }
 
     return keypoints;
+}
+
+std::vector<cv::KeyPoint> Frame::GetValidKeypointsLeft()
+{
+    std::vector<cv::KeyPoint> keypoints;
+    
+    std::unique_lock<std::mutex> lck(keypoint_mutex_);
+
+    return valid_keypoints_right;
+}
+
+std::vector<cv::KeyPoint> Frame::GetValidKeypointsRight()
+{
+    std::vector<cv::KeyPoint> keypoints;
+    
+    std::unique_lock<std::mutex> lck(keypoint_mutex_);
+
+    return valid_keypoints_right;
 }
 
 cv::Mat Frame::GetDescriptorsLeft()

@@ -83,7 +83,6 @@ private:
     
     // Perform feature matching between two frames
     std::vector<cv::DMatch> MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2);
-    std::vector<cv::DMatch> MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2);
 
     // Estimate relative pose using matched features
     bool EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
@@ -109,6 +108,7 @@ private:
     std::queue<Frame::Ptr> keyframe_queue_;
     
     // ORB feature extractor
+    cv::Ptr<cv::GFTTDetector> gftt_detector_;
     cv::Ptr<cv::DescriptorExtractor> orb_extractor_;
     cv::Ptr<cv::DescriptorMatcher> matcher_;
     

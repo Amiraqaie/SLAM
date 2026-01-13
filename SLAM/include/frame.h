@@ -24,12 +24,15 @@ public:
     Sophus::SE3d pose_;     // T_w_c
     std::mutex pose_mutex_;
     std::mutex feature_mutex_;
+    std::mutex keypoint_mutex_;
     cv::Mat left_img_, right_img_;
 
     std::vector<std::shared_ptr<Feature>> features_left_;
     std::vector<std::shared_ptr<Feature>> features_right_;
     cv::Mat orb_descriptors_left_;
     cv::Mat orb_descriptors_right_;
+    std::vector<cv::KeyPoint> valid_keypoints_left;
+    std::vector<cv::KeyPoint> valid_keypoints_right;
 
     
 public:
@@ -50,6 +53,9 @@ public:
 
     std::vector<cv::KeyPoint> GetKeypointsLeft();
     std::vector<cv::KeyPoint> GetKeypointsRight();
+
+    std::vector<cv::KeyPoint> GetValidKeypointsLeft();
+    std::vector<cv::KeyPoint> GetValidKeypointsRight();
 
     cv::Mat GetDescriptorsLeft();
     cv::Mat GetDescriptorsRight();

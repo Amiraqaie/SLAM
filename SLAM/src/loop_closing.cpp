@@ -10,7 +10,12 @@ namespace myslam {
 LoopClosing::LoopClosing() {
     // Initialize ORB feature extractor
     orb_extractor_ = cv::ORB::create();
-    
+    gftt_detector_ = cv::GFTTDetector::create(
+        Config::Get<int>("num_features"),
+        0.01,
+        20
+    );
+
     // Initialize feature matcher
     matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
     
@@ -137,17 +142,22 @@ void LoopClosing::LoopDetectionThread() {
 }
 
 void LoopClosing::ExtractORBDescriptors(Frame::Ptr frame) {
+
     std::vector<cv::KeyPoint> keypoints_left = frame->GetKeypointsLeft();
     std::vector<cv::KeyPoint> keypoints_right = frame->GetKeypointsRight();
+
+    
     cv::Mat descriptors_left;
     cv::Mat descriptors_right;    
-
+    
     orb_extractor_->compute(frame->left_img_, keypoints_left, descriptors_left);
-    orb_extractor_->compute(frame->left_img_, keypoints_right, descriptors_right);
-
-    // Store ORB Descriptors
+    orb_extractor_->compute(frame->right_img_, keypoints_right, descriptors_right);
+    
+    // Store ORB Descriptors and valid keypoints
     frame->orb_descriptors_left_ = descriptors_left;
     frame->orb_descriptors_right_ = descriptors_right;
+    frame->valid_keypoints_left = keypoints_left;
+    frame->valid_keypoints_right = keypoints_right;
 }
 
 std::vector<Frame::Ptr> LoopClosing::DetectLoopCandidates(Frame::Ptr current_frame) {
@@ -193,65 +203,86 @@ double LoopClosing::ComputeVisualSimilarity(Frame::Ptr frame1, Frame::Ptr frame2
 
 bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
                                    SE3& relative_pose, Mat66& information) {
-    // Match features between frames
-    auto matches = MatchFeatures(current_frame, candidate_frame);
+    /*
+    Debug Section
+    std::vector<cv::KeyPoint> keypoints1_debug, keypoints2_debug;
+    cv::Mat descriptor1_debug, descriptor2_debug;
     
-    if (matches.size() < minimum_match_ratio_ * current_frame->features_left_.size())
+    gftt_detector_->detect(current_frame->left_img_, keypoints1_debug);
+    gftt_detector_->detect(candidate_frame->left_img_, keypoints2_debug);
+    
+    // compute descriptor
+    orb_extractor_->compute(current_frame->left_img_, keypoints1_debug, descriptor1_debug);
+    orb_extractor_->compute(candidate_frame->left_img_, keypoints2_debug, descriptor2_debug);
+    
+    // match descriptors
+    std::vector<cv::DMatch> matches_debug;
+    std::vector<std::vector<cv::DMatch>> matches_knn_debug;
+    // matcher_->knnMatch(current_frame->GetDescriptorsLeft(), candidate_frame->GetDescriptorsLeft(), matches_knn, 2);
+    matcher_->knnMatch(descriptor1_debug, descriptor2_debug, matches_knn_debug, 2);
+    
+    // Lowe's ratio test
+    const float ratio_thresh = 0.7f;
+    for (size_t i = 0; i < matches_knn_debug.size(); i++) {
+        if (matches_knn_debug[i][0].distance < ratio_thresh * matches_knn_debug[i][1].distance) {
+            matches_debug.push_back(matches_knn_debug[i][0]);
+        }
+    }
+    cv::Mat descriptor1, descriptor2;
+    descriptor1 = current_frame->GetDescriptorsLeft();
+    descriptor2 = candidate_frame->GetDescriptorsLeft();
+    */ 
+    
+    // Match features between frames
+    std::vector<cv::KeyPoint> keypoints1, keypoints2;
+    keypoints1 = current_frame->GetValidKeypointsLeft();
+    keypoints2 = candidate_frame->GetValidKeypointsLeft();
+
+    std::vector<cv::DMatch> matches = MatchFeatures(current_frame, candidate_frame);
+
+    if (matches.size() < minimum_match_ratio_ * current_frame->GetValidKeypointsLeft().size())
         return false;
     
     // show result of loop closure
     if (show_result_)
     {   
-        cv::Mat outImg;
-        cv::drawMatches(current_frame->left_img_, current_frame->GetKeypointsLeft(), candidate_frame->left_img_, candidate_frame->GetKeypointsLeft(), matches, outImg);
+        cv::Mat outImg, outImg_debug;
+        cv::drawMatches(current_frame->left_img_, keypoints1, candidate_frame->left_img_, keypoints2, matches, outImg);
+        // cv::drawMatches(current_frame->left_img_, keypoints1_debug, candidate_frame->left_img_, keypoints2_debug, matches_debug, outImg_debug);
         cv::imshow("matches", outImg);
         std::string file_name1 = std::to_string(current_frame->id_) + "_" + std::to_string(candidate_frame->id_) + ".png";
         std::string file_name2 = std::to_string(current_frame->id_) + ".png";
         std::string file_name3 = std::to_string(candidate_frame->id_) + ".png";
         cv::imwrite(file_name1, outImg);
-        cv::imwrite(file_name2, current_frame->left_img_);
-        cv::imwrite(file_name3, candidate_frame->left_img_);
+        // cv::imwrite(file_name2, current_frame->left_img_);
+        // cv::imwrite(file_name3, candidate_frame->left_img_);
     }
+
 
     // Estimate relative pose
     // TODO :  we should add spacial loop consistency check to this pipline
-    return EstimateRelativePose(current_frame, candidate_frame, matches, 
-                               relative_pose, information);
+    // After using valid keypoints aidia we show continue reading from VerifyLoopClosure line 120 to verify code and change the needed changes
+    // upper than line 120 in main theread was reviewed
+    // return EstimateRelativePose(current_frame, candidate_frame, matches, 
+                            //    relative_pose, information);
+    return false;
 }
 
-std::vector<cv::DMatch> LoopClosing::MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2) {
+std::vector<cv::DMatch> LoopClosing::MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2) {   
+
+    // match descriptors
     std::vector<cv::DMatch> matches;
-    std::vector<std::vector<cv::DMatch>> knn_matches;
-    
-    matcher_->knnMatch(frame1->orb_descriptors_left_, frame2->orb_descriptors_left_, 
-                      knn_matches, 2);
-    
+    std::vector<std::vector<cv::DMatch>> matches_knn;
+    matcher_->knnMatch(frame1->GetDescriptorsLeft(), frame2->GetDescriptorsLeft(), matches_knn, 2);
+
     // Lowe's ratio test
     const float ratio_thresh = 0.7f;
-    for (size_t i = 0; i < knn_matches.size(); i++) {
-        if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance) {
-            matches.push_back(knn_matches[i][0]);
+    for (size_t i = 0; i < matches_knn.size(); i++) {
+        if (matches_knn[i][0].distance < ratio_thresh * matches_knn[i][1].distance) {
+            matches.push_back(matches_knn[i][0]);
         }
     }
-    
-    return matches;
-}
 
-std::vector<cv::DMatch> LoopClosing::MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2) {
-    std::vector<cv::DMatch> matches;
-    std::vector<std::vector<cv::DMatch>> knn_matches;
-
-    matcher_->knnMatch(descriptors1, descriptors2, 
-                      knn_matches, 2);
-    
-    // Lowe's ratio test
-    const float ratio_thresh = 0.7f;
-    for (size_t i = 0; i < knn_matches.size(); i++) {
-        if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance) {
-            matches.push_back(knn_matches[i][0]);
-        }
-    }
-    
     return matches;
 }
 
@@ -455,4 +486,4 @@ int LoopClosing::EstimateCandidatePose(std::vector<cv::Point3d> &objectPoints, s
 }
 
 
-}  // namespace myslam
+}
