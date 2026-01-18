@@ -7,20 +7,9 @@
 #include "frontend.h"
 #include "g2o_types.h"
 #include "map.h"
-#include "viewer.h"
+#include "viewer_light.h"
 
 namespace myslam {
-
-#include "algorithm.h"
-#include "frontend.h"
-#include "backend.h"
-#include "config.h"
-#include "feature.h"
-#include "opencv2/opencv.hpp"
-#include "viewer.h"
-#include "map.h"
-#include "g2o_types.h"
-
 
 Frontend::Frontend() {
     // GFTT detector

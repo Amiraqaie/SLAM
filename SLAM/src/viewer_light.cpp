@@ -13,6 +13,7 @@ static constexpr float SCALE = 20.0f;   // meters → pixels
 
 Viewer::Viewer() {
     viewer_thread_ = std::thread(&Viewer::ThreadLoop, this);
+    viewer_running_ = true;
 }
 
 void Viewer::Close() {

@@ -6,7 +6,7 @@
 #include "common_include.h"
 #include "dataset.h"
 #include "frontend.h"
-#include "viewer.h"
+#include "viewer_light.h"
 #include "loop_closing.h"
 #include "pose_graph.h"
 
