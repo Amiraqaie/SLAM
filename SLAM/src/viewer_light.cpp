@@ -28,22 +28,23 @@ void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
 
 void Viewer::UpdateMap() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
-    active_keyframes_ = map_->GetAllKeyFrames();
-    active_landmarks_ = map_->GetAllMapPoints();
+    active_landmarks_ = map_->GetActiveMapPoints();
     map_updated_ = true;
 }
 
 void Viewer::ThreadLoop() {
-    cv::namedWindow("MySLAM Track", cv::WINDOW_NORMAL);
+    cv::namedWindow("MySLAM Track", cv::WINDOW_FULLSCREEN);
     cv::namedWindow("MySLAM Frame", cv::WINDOW_NORMAL);
 
     std::deque<cv::Point2f> trajectory;
 
     while (viewer_running_) {
         Frame::Ptr frame;
+        Map::LandmarksType landmarks;
         {
             std::unique_lock<std::mutex> lock(viewer_data_mutex_);
             frame = current_frame_;
+            landmarks = active_landmarks_;
         }
 
         if (!frame) {
@@ -93,7 +94,7 @@ void Viewer::ThreadLoop() {
         }
 
         // Compute dynamic scale to fit window
-        float margin = 20; // pixels
+        float margin = 50; // pixels
         float scale_x = (TRAJ_SIZE - 2*margin) / std::max(1e-5f, max_x - min_x);
         float scale_z = (TRAJ_SIZE - 2*margin) / std::max(1e-5f, max_z - min_z);
         float scale = std::min(scale_x, scale_z);
@@ -108,18 +109,22 @@ void Viewer::ThreadLoop() {
                 margin + (trajectory[i].x - min_x) * scale,
                 TRAJ_SIZE - margin - (trajectory[i].y - min_z) * scale
             );
-            cv::line(traj, p1, p2, cv::Scalar(0, 255, 0), 2);
+            cv::line(traj, p1, p2, cv::Scalar(255, 255, 0), 2);
         }
 
         // Draw all landmarks
-        // for (auto &landmark : active_landmarks_) {
-        //     auto pose = landmark.second->Pos();
-        //     cv::Point2f landmark_2d = cv::Point2f(
-        //         margin + (pose[0] - min_x) * scale,
-        //         TRAJ_SIZE - margin - (pose[2] - min_z) * scale
-        //     );
-        //     cv::circle(traj, landmark_2d, 1, cv::Scalar(0, 255, 0), -1);
-        // }
+        int index = 0;
+        for (auto &landmark : landmarks) {
+            index++;
+            if (index % 100 == 0)
+                continue;
+            auto pose = landmark.second->Pos();
+            cv::Point2f landmark_2d = cv::Point2f(
+                margin + (pose[0] - min_x) * scale,
+                TRAJ_SIZE - margin - (pose[2] - min_z) * scale
+            );
+            cv::circle(traj, landmark_2d, 1, cv::Scalar(0, 255, 0), -1);
+        }
 
         // Draw current position
         cv::Point2f cur_pt(
