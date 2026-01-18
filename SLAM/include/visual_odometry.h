@@ -62,7 +62,7 @@ private:
     // Loop closure parameters
     int loop_closure_frequency_ = 10;  // Check for PGO every N keyframes
     int keyframes_since_last_pgo_ = 0;
-    int min_loop_constraints_for_pgo_ = 3;
+    int min_loop_constraints_for_pgo_ = 1;
 };
 }  // namespace myslam
 
