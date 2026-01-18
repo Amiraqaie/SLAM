@@ -41,7 +41,7 @@ std::vector<cv::KeyPoint> Frame::GetKeypointsRight()
     std::vector<cv::KeyPoint> keypoints;
     
     std::unique_lock<std::mutex> lck(feature_mutex_);
-    for (Feature::Ptr feat : features_right_)
+    for (Feature::Ptr feat : features_left_)
     {
         if (!feat)
             continue;
@@ -57,7 +57,7 @@ std::vector<cv::KeyPoint> Frame::GetValidKeypointsLeft()
     
     std::unique_lock<std::mutex> lck(keypoint_mutex_);
 
-    return valid_keypoints_left;
+    return valid_keypoints_right;
 }
 
 std::vector<cv::KeyPoint> Frame::GetValidKeypointsRight()

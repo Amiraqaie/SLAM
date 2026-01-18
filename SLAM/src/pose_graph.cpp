@@ -163,7 +163,6 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         edge->setVertex(1, optimizer.vertex(constraint.keyframe2_id));
         
         // Convert relative pose to g2o format
-        // relative_iso should be T_kf1_kf2
         Eigen::Isometry3d relative_iso = Eigen::Isometry3d::Identity();
         relative_iso.linear() = constraint.relative_pose.rotationMatrix();
         relative_iso.translation() = constraint.relative_pose.translation();
@@ -186,7 +185,7 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         const auto& t = relative_iso.translation();
         Eigen::Quaterniond q(relative_iso.rotation());
 
-        LOG(INFO) << "[LOOP CLOSURE EDGE] "
+        LOG(INFO) << "[OdomEdge] "
                 << "KF " << constraint.keyframe1_id
                 << " -> " << constraint.keyframe2_id
                 << " | t = [" << t.transpose() << "]"
@@ -195,7 +194,7 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
                                 << q.y() << ", "
                                 << q.z() << "]";
 
-        LOG(INFO) << "[LOOP CLOSURE] Information:\n" << constraint.information;
+        LOG(INFO) << "[OdomEdge] Information:\n" << constraint.information;
     }
 }
 
