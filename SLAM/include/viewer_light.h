@@ -57,6 +57,8 @@ class Viewer {
     bool map_updated_ = false;
 
     std::mutex viewer_data_mutex_;
+
+    std::condition_variable map_update_;
 };
 }  // namespace myslam
 

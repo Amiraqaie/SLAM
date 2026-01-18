@@ -46,6 +46,7 @@ bool Frontend::AddFrame(Frame::Ptr frame) {
             break;
         case FrontendStatus::LOST:
             Reset();
+            return false;
             break;
     }
 
@@ -163,6 +164,7 @@ int Frontend::EstimateCurrentPose()
     vertex_pose->setId(0);
     vertex_pose->setEstimate(current_frame_->Pose());
     optimizer.addVertex(vertex_pose);
+    // optimizer.setVerbose(true);
 
     // K 
     Eigen::Matrix3d K = camera_left_->K();

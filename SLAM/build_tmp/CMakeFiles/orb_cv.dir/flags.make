@@ -6,5 +6,5 @@ CXX_DEFINES = -DGFLAGS_IS_A_DLL=0 -DGOOGLE_GLOG_DLL_DECL="" -DGOOGLE_GLOG_DLL_DE
 
 CXX_INCLUDES = -I/home/havaie/Codes/SLAM/SLAM/include -isystem /usr/include/eigen3 -isystem /usr/include/opencv4
 
-CXX_FLAGS = -std=c++11 -Wall -std=c++17 -O3 -fopenmp -pthread -Wno-error=ignored-qualifiers -Wno-error=sign-compare -Wno-error=deprecated-copy -Wno-error=missing-field-initializers -Wno-error=pessimizing-move -DGTEST_HAS_PTHREAD=1 -std=gnu++17
+CXX_FLAGS = -Wno-error=ignored-qualifiers -Wno-error=sign-compare -Wno-error=deprecated-copy -Wno-error=missing-field-initializers -Wno-error=pessimizing-move -DGTEST_HAS_PTHREAD=1
 

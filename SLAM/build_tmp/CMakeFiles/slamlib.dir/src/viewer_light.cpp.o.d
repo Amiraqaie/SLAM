@@ -38,8 +38,8 @@ CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/x86_64-linux-gnu/bits/wchar2.h /usr/include/c++/11/tuple \
- /usr/include/c++/11/utility /usr/include/c++/11/bits/stl_relops.h \
+ /usr/include/c++/11/tuple /usr/include/c++/11/utility \
+ /usr/include/c++/11/bits/stl_relops.h \
  /usr/include/c++/11/bits/stl_pair.h /usr/include/c++/11/initializer_list \
  /usr/include/c++/11/array /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/stl_algobase.h \
@@ -137,18 +137,13 @@ CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: \
  /usr/include/x86_64-linux-gnu/sys/select.h \
  /usr/include/x86_64-linux-gnu/bits/select.h \
  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
- /usr/include/x86_64-linux-gnu/bits/select2.h /usr/include/alloca.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib.h \
+ /usr/include/alloca.h /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/c++/11/bits/std_abs.h /usr/include/c++/11/cstdio \
  /usr/include/stdio.h /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
- /usr/include/x86_64-linux-gnu/bits/stdio.h \
- /usr/include/x86_64-linux-gnu/bits/stdio2.h \
  /usr/include/c++/11/bits/charconv.h \
  /usr/include/c++/11/bits/basic_string.tcc \
  /usr/include/c++/11/bits/locale_classes.tcc \
@@ -247,10 +242,7 @@ CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: \
  /usr/include/c++/11/tr1/riemann_zeta.tcc \
  /usr/local/include/pangolin/display/widgets.h \
  /usr/local/include/pangolin/var/var.h /usr/include/string.h \
- /usr/include/strings.h \
- /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
- /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
- /usr/local/include/pangolin/utils/is_streamable.h \
+ /usr/include/strings.h /usr/local/include/pangolin/utils/is_streamable.h \
  /usr/local/include/pangolin/var/varvalue.h \
  /usr/local/include/pangolin/var/varvaluet.h \
  /usr/local/include/pangolin/var/varvaluegeneric.h \
@@ -274,7 +266,6 @@ CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/mm_malloc.h \
  /usr/include/c++/11/stdlib.h /usr/include/c++/11/complex \
  /usr/include/eigen3/Eigen/src/Core/util/MKL_support.h \
- /usr/lib/gcc/x86_64-linux-gnu/11/include/omp.h \
  /usr/include/c++/11/cstddef /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/syslimits.h \
@@ -578,7 +569,6 @@ CMakeFiles/slamlib.dir/src/viewer_light.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
- /usr/include/x86_64-linux-gnu/bits/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
  /usr/include/linux/close_range.h /usr/include/gflags/gflags.h \
  /usr/include/gflags/gflags_declare.h /usr/include/gflags/gflags_gflags.h \

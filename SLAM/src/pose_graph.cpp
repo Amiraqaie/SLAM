@@ -4,7 +4,7 @@
 namespace myslam {
 
 PoseGraphOptimization::PoseGraphOptimization() {
-    max_iterations_ = 100;
+    max_iterations_ = 20;
     verbose_ = true;
     
     LOG(INFO) << "Pose Graph Optimization initialized";
@@ -136,16 +136,16 @@ void PoseGraphOptimization::AddOdometryEdges(g2o::SparseOptimizer& optimizer) {
         const auto& t = relative_iso.translation();
         Eigen::Quaterniond q(relative_iso.rotation());
 
-        LOG(INFO) << "[OdomEdge] "
-                << "KF " << kf1->keyframe_id_
-                << " -> " << kf2->keyframe_id_
-                << " | t = [" << t.transpose() << "]"
-                << " | q = [" << q.w() << ", "
-                                << q.x() << ", "
-                                << q.y() << ", "
-                                << q.z() << "]";
+        // LOG(INFO) << "[OdomEdge] "
+        //         << "KF " << kf1->keyframe_id_
+        //         << " -> " << kf2->keyframe_id_
+        //         << " | t = [" << t.transpose() << "]"
+        //         << " | q = [" << q.w() << ", "
+        //                         << q.x() << ", "
+        //                         << q.y() << ", "
+        //                         << q.z() << "]";
 
-        LOG(INFO) << "[OdomEdge] Information:\n" << information;
+        // LOG(INFO) << "[OdomEdge] Information:\n" << information;
     }
     
     LOG(INFO) << "Added " << edge_count << " odometry edges to pose graph";
@@ -218,7 +218,14 @@ void PoseGraphOptimization::ExtractPoseCorrections(g2o::SparseOptimizer& optimiz
         
         // Compute correction: T_corrected = T_correction * T_original
         // Therefore: T_correction = T_corrected * T_original^(-1)
-        SE3 correction = optimized_pose * original_poses_[kf_id].inverse();
+        // T_original = T_w_c (old)
+        // T_crrected = T_w_c (new)
+        // T_correction = look like non sense
+        // should be T_correction = T_original(-1) * T_crrected = T_c(old)_c(new)
+        // or T_correction = T_crrected(-1) * T_original = T_c(new)_c(old) this is better
+        
+        // SE3 correction = optimized_pose * original_poses_[kf_id].inverse();
+        SE3 correction = optimized_pose.inverse() * original_poses_[kf_id];
         pose_corrections_[kf_id] = correction;
         
         LOG(INFO) << "Keyframe " << kf_id << " correction: " 
@@ -235,7 +242,8 @@ void PoseGraphOptimization::UpdateMapAfterOptimization() {
         unsigned long kf_id = keyframe->keyframe_id_;
         
         if (pose_corrections_.find(kf_id) != pose_corrections_.end()) {
-            SE3 corrected_pose = pose_corrections_[kf_id] * original_poses_[kf_id];
+            // T_w_c(new) = T_w_c (old)  *  T_c(new)_c(old).inverse()
+            SE3 corrected_pose = pose_corrections_[kf_id] * original_poses_[kf_id].inverse();
             keyframe->SetPose(corrected_pose);
         }
     }
@@ -250,13 +258,18 @@ void PoseGraphOptimization::UpdateMapAfterOptimization() {
 void PoseGraphOptimization::CorrectMapPointPositions() {
     auto landmarks = map_->GetAllMapPoints();
     int corrected_points = 0;
+    int64 all_points = landmarks.size();
+    int64 no_observation_points = 0;
     
     for (const auto& lm_pair : landmarks) {
         auto landmark = lm_pair.second;
         auto observations = landmark->GetObs();
         
-        if (observations.empty()) continue;
-        
+        if (observations.empty()) 
+        {
+            no_observation_points++;
+            continue;
+        }
         // Find the keyframe that observed this landmark with the smallest correction
         // (to minimize correction error propagation)
         SE3 best_correction;
@@ -285,8 +298,12 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
         
         // Apply correction to map point position
         if (found_correction) {
+
+            // original_pos = coordinate of landmark in World coordinate
             Vec3 original_pos = landmark->Pos();
-            Vec3 corrected_pos = best_correction * original_pos;
+
+            // original pose in old camera coordinate
+            Vec3 corrected_pos =  best_correction * original_pos;
             landmark->SetPos(corrected_pos);
             corrected_points++;
             
@@ -295,7 +312,7 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
         }
     }
     
-    LOG(INFO) << "Corrected positions of " << corrected_points << " map points";
+    LOG(INFO) << "Corrected positions of " << corrected_points << " map points out of " << all_points - no_observation_points << " available map points!!!";
 }
 
-}  // namespace myslam
+}

@@ -110,6 +110,16 @@ void Viewer::ThreadLoop() {
             cv::line(traj, p1, p2, cv::Scalar(0, 255, 0), 2);
         }
 
+        // Draw all landmarks
+        // for (auto &landmark : active_landmarks_) {
+        //     auto pose = landmark.second->Pos();
+        //     cv::Point2f landmark_2d = cv::Point2f(
+        //         margin + (pose[0] - min_x) * scale,
+        //         TRAJ_SIZE - margin - (pose[2] - min_z) * scale
+        //     );
+        //     cv::circle(traj, landmark_2d, 1, cv::Scalar(0, 255, 0), -1);
+        // }
+
         // Draw current position
         cv::Point2f cur_pt(
             margin + (pt.x - min_x) * scale,
