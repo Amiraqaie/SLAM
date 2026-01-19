@@ -216,35 +216,10 @@ double LoopClosing::ComputeVisualSimilarity(Frame::Ptr frame1, Frame::Ptr frame2
 
 bool LoopClosing::VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
                                    SE3& relative_pose, Mat66& information) {
-    
-    // Match features between frames
-    std::vector<cv::KeyPoint> keypoints1, keypoints2;
-    keypoints1 = current_frame->GetValidKeypointsLeft();
-    keypoints2 = candidate_frame->GetValidKeypointsLeft();
 
     std::vector<cv::DMatch> matches = MatchFeatures(current_frame, candidate_frame);
 
-    if (matches.size() < minimum_match_ratio_ * current_frame->GetValidKeypointsLeft().size())
-        return false;
-    
-    // show result of loop closure
-    if (show_result_)
-    {   
-        std::string file_name1 = std::to_string(current_frame->id_) + "_" + std::to_string(candidate_frame->id_) + ".png";
-        std::cout << "Number of matches: " << matches.size() << std::endl;
-        std::cout << "Number of keypoints in image1: " << keypoints1.size() << std::endl;
-        std::cout << "Number of keypoints in image2: " << keypoints2.size() << std::endl;
-        cv::Mat outImg;
-        cv::drawMatches(current_frame->left_img_, keypoints1, candidate_frame->left_img_, keypoints2, matches, outImg);
-        cv::imshow("loop closure result", outImg);
-        // cv::imwrite(file_name1, outImg);
-    }
-
-
     // Estimate relative pose
-    // TODO :  we should add spacial loop consistency check to this pipline
-    // After using valid keypoints aidia we show continue reading from VerifyLoopClosure line 120 to verify code and change the needed changes
-    // upper than line 120 in main theread was reviewed
     return EstimateRelativePose(current_frame, candidate_frame, matches, 
                                relative_pose, information);
 }
@@ -338,11 +313,116 @@ std::map<int, Vec3> LoopClosing::TriangulateFeatures(Frame::Ptr frame) {
     return triangulated_points;
 }
 
+std::vector<cv::DMatch> LoopClosing::TrackFeaturesLK(Frame::Ptr frame)
+{
+    std::vector<cv::DMatch> matches;
+    
+    std::vector<cv::KeyPoint> key_points_left = frame->GetValidKeypointsLeft();
+    
+    // use LK flow to estimate points in the right image
+    std::vector<cv::Point2f> kps_left, kps_right;
+    for (auto &kp : key_points_left) {
+        kps_left.push_back(kp.pt);
+        kps_right.push_back(kp.pt);
+    }
+
+    std::vector<uchar> status;
+    std::vector<float> error;
+    cv::calcOpticalFlowPyrLK(
+        frame->left_img_, frame->right_img_, kps_left,
+        kps_right, status, error, cv::Size(11, 11), 3,
+        cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
+                         0.01),
+        cv::OPTFLOW_USE_INITIAL_FLOW);
+
+    // 4. Filtering and Creating DMatch objects
+    for (size_t i = 0; i < key_points_left.size(); i++) {
+        if (status[i] == 1) {
+            // A successful track: prevPoints[i] -> nextPoints[i]
+            
+            cv::DMatch match;
+            // queryIdx corresponds to the index in the input KeyPoint vector
+            match.queryIdx = (int)i; 
+            // trainIdx is set to the same index for tracking consistency
+            match.trainIdx = (int)i; 
+            
+            // Use the tracking error as the 'distance'
+            if (i < error.size()) {
+                match.distance = error[i]; 
+            } else {
+                match.distance = 0.0f; 
+            }
+            
+            matches.push_back(match);
+        }
+    }
+
+    return matches;
+}
+
+std::map<int, Vec3> LoopClosing::TriangulateFeaturesLK(Frame::Ptr frame) {
+
+    std::map<int, Vec3> triangulated_points;
+    std::vector<cv::KeyPoint> key_points_left = frame->GetValidKeypointsLeft();
+    std::vector<cv::KeyPoint> key_points_right = frame->GetValidKeypointsRight();
+    std::vector<cv::DMatch> matches = TrackFeaturesLK(frame);
+
+    if (show_result_)
+    {   
+        std::string file_name = std::to_string(frame->id_) + "_LeftToRight.png";
+        std::cout << file_name << std::endl;
+        cv::Mat outImg;
+        cv::drawMatches(frame->left_img_, key_points_left, frame->right_img_, key_points_right, matches, outImg);
+        cv::imshow("left to right triangulation", outImg);
+        // cv::imwrite(file_name, outImg);
+    }
+
+    std::vector<Sophus::SE3d> poses{camera_left_->pose(), camera_right_->pose()};
+    size_t cnt_init_landmarks = 0;
+
+    std::unique_lock<std::mutex> lck(frame->keypoint_mutex_);
+    for (auto match : matches)
+    {
+        // triangulation
+        std::vector<Eigen::Vector3d> points{
+            camera_left_->pixel2camera(Eigen::Vector2d(key_points_left[match.queryIdx].pt.x, key_points_left[match.queryIdx].pt.y)),
+            camera_right_->pixel2camera(Eigen::Vector2d(key_points_right[match.trainIdx].pt.x, key_points_right[match.trainIdx].pt.y))
+            };
+
+
+        Eigen::Vector3d p_camera_left = Eigen::Vector3d::Zero();
+
+        if (triangulation(poses, points, p_camera_left) && p_camera_left[2] > 0) {
+            triangulated_points.insert(std::make_pair((int) match.queryIdx, p_camera_left));
+            cnt_init_landmarks++;
+        }
+    }
+                
+    LOG(INFO) << "Loop Closure Triangulated " << cnt_init_landmarks << " 3D points";
+
+    return triangulated_points;
+}
+
 bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                                        const std::vector<cv::DMatch>& matches,
                                        SE3& relative_pose, Mat66& information) {
     if (matches.size() < static_cast<size_t>(min_inliers_))
         return false;
+
+    // show result of loop closure
+    if (show_result_)
+    {   
+        // Match features between frames
+        std::vector<cv::KeyPoint> keypoints1, keypoints2;
+        keypoints1 = frame1->GetValidKeypointsLeft();
+        keypoints2 = frame2->GetValidKeypointsLeft();
+        std::string file_name1 = std::to_string(frame1->id_) + "_" + std::to_string(frame2->id_) + ".png";
+        std::cout << "Number of matches: " << matches.size() << std::endl;
+        cv::Mat outImg;
+        cv::drawMatches(frame1->left_img_, keypoints1, frame2->left_img_, keypoints2, matches, outImg);
+        cv::imshow("loop closure result", outImg);
+        // cv::imwrite(file_name1, outImg);
+    }
 
     // Step 1: Triangulate ORB features in frame1 using stereo
     std::map<int, Vec3> pts3d_frame1 = TriangulateFeatures(frame1);

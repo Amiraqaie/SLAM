@@ -10,7 +10,7 @@
 #include "g2o_types.h"
 #include <queue>
 #include <DBoW3/DBoW3.h>
-
+#include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>
 // #include <opencv2/xfeatures2d.hpp>
 
@@ -70,6 +70,7 @@ private:
     
     // Triangulate the extracted orb feature in left and right image of frame
     std::map<int, Vec3> TriangulateFeatures(Frame::Ptr frame);
+    std::map<int, Vec3> TriangulateFeaturesLK(Frame::Ptr frame);
 
     // Verify loop closure through geometric verification
     bool VerifyLoopClosure(Frame::Ptr current_frame, Frame::Ptr candidate_frame,
@@ -84,7 +85,7 @@ private:
     // Perform feature matching between two frames
     std::vector<cv::DMatch> MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2);
     std::vector<cv::DMatch> MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2);
-    
+    std::vector<cv::DMatch> TrackFeaturesLK(Frame::Ptr frame);
     // Estimate relative pose using matched features
     bool EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                              const std::vector<cv::DMatch>& matches,
