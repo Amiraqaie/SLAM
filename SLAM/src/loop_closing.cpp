@@ -127,6 +127,7 @@ void LoopClosing::LoopDetectionThread() {
                 {
                     std::unique_lock<std::mutex> lock(constraints_mutex_);
                     loop_constraints_.push_back(constraint);
+                    map_->SetLoopConstraints(loop_constraints_);
                 }
                 
                 LOG(INFO) << "Loop closure detected between keyframes " 
@@ -548,6 +549,7 @@ int LoopClosing::EstimateCandidatePose(std::vector<cv::Point3d> &objectPoints, s
     LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/"
               << imagePointsStatus.size() - cnt_outlier;
 
+    // Relative pose will be T_kf2_kf1 == T_candidate_current
     relative_pose = vertex_pose->estimate();
 
     LOG(INFO) << "Candidate Pose = \n" << vertex_pose->estimate().matrix();

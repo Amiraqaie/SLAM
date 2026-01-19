@@ -4,7 +4,7 @@
 namespace myslam {
 
 PoseGraphOptimization::PoseGraphOptimization() {
-    max_iterations_ = 20;
+    max_iterations_ = 100;
     verbose_ = true;
     
     LOG(INFO) << "Pose Graph Optimization initialized";
@@ -82,10 +82,11 @@ void PoseGraphOptimization::AddKeyframeVertices(g2o::SparseOptimizer& optimizer)
         vertex->setId(keyframe->keyframe_id_);
         
         // Convert Sophus SE3 to g2o SE3
+        // vertex estimation = T_w_c
         Eigen::Isometry3d pose_iso = Eigen::Isometry3d::Identity();
         pose_iso.linear() = keyframe->Pose().rotationMatrix();
         pose_iso.translation() = keyframe->Pose().translation();
-        vertex->setEstimate(pose_iso);
+        vertex->setEstimate(pose_iso.inverse());
         
         // Fix the first keyframe
         if (keyframe->keyframe_id_ == 0) {
@@ -112,7 +113,9 @@ void PoseGraphOptimization::AddOdometryEdges(g2o::SparseOptimizer& optimizer) {
         
         // Compute relative pose between consecutive keyframes
         // T_kf1_kf2
-        SE3 relative_pose = kf1->Pose().inverse() * kf2->Pose();
+        // kf1->Pose() returns T_c_w
+        // SE3 relative_pose = kf1->Pose().inverse() * kf2->Pose();
+        SE3 relative_pose = kf1->Pose() * kf2->Pose().inverse();
         
         // Create SE3 edge
         g2o::EdgeSE3* edge = new g2o::EdgeSE3();
@@ -129,23 +132,13 @@ void PoseGraphOptimization::AddOdometryEdges(g2o::SparseOptimizer& optimizer) {
         // Set information matrix (odometry is usually quite accurate)
         Mat66 information = Mat66::Identity() * 1000.0;  // High confidence
         edge->setInformation(information);
-        
+
+        // Add robust kernel for loop closures
+        g2o::RobustKernelHuber* robust_kernel = new g2o::RobustKernelHuber();
+        robust_kernel->setDelta(1.0);
+        edge->setRobustKernel(robust_kernel);
+
         optimizer.addEdge(edge);
-
-        // Print odometry edge info
-        const auto& t = relative_iso.translation();
-        Eigen::Quaterniond q(relative_iso.rotation());
-
-        // LOG(INFO) << "[OdomEdge] "
-        //         << "KF " << kf1->keyframe_id_
-        //         << " -> " << kf2->keyframe_id_
-        //         << " | t = [" << t.transpose() << "]"
-        //         << " | q = [" << q.w() << ", "
-        //                         << q.x() << ", "
-        //                         << q.y() << ", "
-        //                         << q.z() << "]";
-
-        // LOG(INFO) << "[OdomEdge] Information:\n" << information;
     }
     
     LOG(INFO) << "Added " << edge_count << " odometry edges to pose graph";
@@ -167,8 +160,8 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         Eigen::Isometry3d relative_iso = Eigen::Isometry3d::Identity();
         relative_iso.linear() = constraint.relative_pose.rotationMatrix();
         relative_iso.translation() = constraint.relative_pose.translation();
-        edge->setMeasurement(relative_iso);
-        
+        edge->setMeasurement(relative_iso.inverse());
+
         // Set information matrix
         edge->setInformation(constraint.information);
         
@@ -178,24 +171,23 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         edge->setRobustKernel(robust_kernel);
         
         optimizer.addEdge(edge);
-        
+
+        // Sort keyframes by ID
+        auto keyframes = map_->GetAllKeyFrames();
+        std::vector<std::pair<unsigned long, Frame::Ptr>> sorted_keyframes(keyframes.begin(), keyframes.end());
+        std::sort(sorted_keyframes.begin(), sorted_keyframes.end());
+        auto kf1 = sorted_keyframes[constraint.keyframe1_id].second;
+        auto kf2 = sorted_keyframes[constraint.keyframe2_id].second;
+        SE3 relative_pose = kf1->Pose().inverse() * kf2->Pose();
+
+        LOG(INFO) << "--- relative_iso (T_kf1_kf2 from constraint) ---";
+        LOG(INFO) << "Rotation Matrix:\n" << relative_iso.linear();
+        LOG(INFO) << "Translation Vector: " << relative_iso.translation().transpose();
+        LOG(INFO) << "--- relative_pose (T_kf1_kf2 from map data) ---";
+        LOG(INFO) << "SE3 Object: " << relative_pose.matrix().transpose(); 
+
         LOG(INFO) << "Added loop closure edge between keyframes " 
                  << constraint.keyframe1_id << " and " << constraint.keyframe2_id;
-
-        // Print loopclosure edge info
-        const auto& t = relative_iso.translation();
-        Eigen::Quaterniond q(relative_iso.rotation());
-
-        LOG(INFO) << "[LOOP CLOSURE EDGE] "
-                << "KF " << constraint.keyframe1_id
-                << " -> " << constraint.keyframe2_id
-                << " | t = [" << t.transpose() << "]"
-                << " | q = [" << q.w() << ", "
-                                << q.x() << ", "
-                                << q.y() << ", "
-                                << q.z() << "]";
-
-        LOG(INFO) << "[LOOP CLOSURE] Information:\n" << constraint.information;
     }
 }
 
@@ -225,7 +217,7 @@ void PoseGraphOptimization::ExtractPoseCorrections(g2o::SparseOptimizer& optimiz
         // or T_correction = T_crrected(-1) * T_original = T_c(new)_c(old) this is better
         
         // SE3 correction = optimized_pose * original_poses_[kf_id].inverse();
-        SE3 correction = optimized_pose.inverse() * original_poses_[kf_id];
+        SE3 correction = optimized_pose.inverse() * original_poses_[kf_id].inverse();
         pose_corrections_[kf_id] = correction;
         
         LOG(INFO) << "Keyframe " << kf_id << " correction: " 
@@ -243,7 +235,7 @@ void PoseGraphOptimization::UpdateMapAfterOptimization() {
         
         if (pose_corrections_.find(kf_id) != pose_corrections_.end()) {
             // T_w_c(new) = T_w_c (old)  *  T_c(new)_c(old).inverse()
-            SE3 corrected_pose = pose_corrections_[kf_id] * original_poses_[kf_id].inverse();
+            SE3 corrected_pose = pose_corrections_[kf_id] * original_poses_[kf_id];
             keyframe->SetPose(corrected_pose);
         }
     }
@@ -292,6 +284,7 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
                     min_correction_magnitude = magnitude;
                     best_correction = correction;
                     found_correction = true;
+
                 }
             }
         }

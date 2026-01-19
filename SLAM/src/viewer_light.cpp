@@ -2,7 +2,8 @@
 #include "frame.h"
 #include "map.h"
 #include "feature.h"
-
+#include "loop_closing.h"
+#include "algorithm.h"
 #include <opencv2/opencv.hpp>
 #include <deque>
 
@@ -29,56 +30,46 @@ void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
 void Viewer::UpdateMap() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     active_landmarks_ = map_->GetActiveMapPoints();
+    active_keyframes_ = map_->GetAllKeyFrames();
+    loop_constraints_ = map_->GetLoopConstraints();
     map_updated_ = true;
 }
 
 void Viewer::ThreadLoop() {
     cv::namedWindow("MySLAM Track", cv::WINDOW_FULLSCREEN);
-    cv::namedWindow("MySLAM Frame", cv::WINDOW_NORMAL);
+    // cv::namedWindow("MySLAM Frame", cv::WINDOW_NORMAL);
 
     std::deque<cv::Point2f> trajectory;
 
     while (viewer_running_) {
-        Frame::Ptr frame;
+        Frame::Ptr current_frame;
         Map::LandmarksType landmarks;
+        std::map<unsigned long, Frame::Ptr> keyframes;
+        std::vector<LoopConstraint> constraints;
         {
             std::unique_lock<std::mutex> lock(viewer_data_mutex_);
-            frame = current_frame_;
+            keyframes = std::map<unsigned long, Frame::Ptr>(active_keyframes_.begin(), active_keyframes_.end());
+            current_frame = current_frame_;
             landmarks = active_landmarks_;
+            constraints = loop_constraints_;
         }
 
-        if (!frame) {
+        if (!current_frame) {
             cv::waitKey(5);
             continue;
         }
 
-        // =========================
-        // 1. Draw current image
-        // =========================
-        cv::Mat img;
-        cv::cvtColor(frame->left_img_, img, cv::COLOR_GRAY2BGR);
-
-        for (auto& feat : frame->features_left_) {
-            std::unique_lock<std::mutex> lck(frame->feature_mutex_);
-            if (feat->map_point_.lock()) {
-                cv::circle(img, feat->position_.pt, 2,
-                           cv::Scalar(0, 255, 0), 2);
-            }
-        }
-
-        cv::imshow("MySLAM Frame", img);
-
-        // =========================
         // 2. Draw trajectory (dynamic scale)
-        // =========================
         cv::Mat traj = cv::Mat::zeros(TRAJ_SIZE, TRAJ_SIZE, CV_8UC3);
 
-        SE3 Twc = frame->Pose().inverse();
-        Eigen::Vector3d t = Twc.translation();
-
-        // Add current point to trajectory
-        cv::Point2f pt(t.x(), t.z()); // store in real-world coords
-        trajectory.push_back(pt);
+        trajectory.clear();
+        for (auto frame : keyframes)
+        {
+            SE3 Twc = frame.second->Pose().inverse();
+            Eigen::Vector3d t = Twc.translation();
+            cv::Point2f pt(t.x(), t.z()); // store in real-world coords
+            trajectory.push_back(pt);
+        }
 
         // Compute bounding box of all trajectory points
         float min_x = std::numeric_limits<float>::max();
@@ -109,7 +100,7 @@ void Viewer::ThreadLoop() {
                 margin + (trajectory[i].x - min_x) * scale,
                 TRAJ_SIZE - margin - (trajectory[i].y - min_z) * scale
             );
-            cv::line(traj, p1, p2, cv::Scalar(255, 255, 0), 2);
+            cv::line(traj, p1, p2, cv::Scalar(255, 255, 0), 1);
         }
 
         // Draw all landmarks
@@ -127,15 +118,43 @@ void Viewer::ThreadLoop() {
         }
 
         // Draw current position
+        SE3 Twc = current_frame->Pose().inverse();
+        Eigen::Vector3d t = Twc.translation();
+        cv::Point2f pt(t.x(), t.z()); // store in real-world coords
         cv::Point2f cur_pt(
             margin + (pt.x - min_x) * scale,
             TRAJ_SIZE - margin - (pt.y - min_z) * scale
         );
         cv::circle(traj, cur_pt, 3, cv::Scalar(0, 0, 255), -1);
 
+        
+        // Draw Loop Constraints
+        for (auto constraint : constraints)
+        {
+            int keyframe1_id = constraint.keyframe1_id;
+            int keyframe2_id = constraint.keyframe2_id;
+            
+            Frame::Ptr kf1 = map_->GetByKeyFrameId(keyframe1_id);
+            Frame::Ptr kf2 = map_->GetByKeyFrameId(keyframe2_id);
+            
+            SE3 Twc1 = kf1->Pose().inverse();
+            SE3 Twc2 = kf2->Pose().inverse();
+            
+            Eigen::Vector3d t1 = Twc1.translation();
+            Eigen::Vector3d t2 = Twc2.translation();
+            
+            cv::Point2f p1 = cv::Point2f(
+                margin + (t1.x() - min_x) * scale,
+                TRAJ_SIZE - margin - (t1.z() - min_z) * scale
+            );
+            cv::Point2f p2 = cv::Point2f(
+                margin + (t2.x() - min_x) * scale,
+                TRAJ_SIZE - margin - (t2.z() - min_z) * scale
+            );
+            cv::line(traj, p1, p2, cv::Scalar(0, 0, 255), 1);   
+        }
+        
         cv::imshow("MySLAM Track", traj);
-
-
         cv::waitKey(5);
     }
 }

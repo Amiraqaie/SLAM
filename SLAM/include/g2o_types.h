@@ -68,7 +68,7 @@ class EdgeProjectionPoseOnly : public g2o::BaseUnaryEdge<2, Vec2, VertexPose> {
     // _pos3d is the landmark location in refrence coordinate system, 
     // refrence can be previous frame or the world frame (first frame)
     // so the T shuold translate this point from refrence to cuurent frame
-    // this mean T = T_current_refrence = T_kf1_kf2 = T_w_c
+    // this mean T = T_current_refrence = T_kf2_kf1 = T_c_w
     EdgeProjectionPoseOnly(const Vec3 &pos, const Mat33 &K)
         : _pos3d(pos), _K(K) {}
 

@@ -21,7 +21,7 @@ public:
     unsigned long keyframe_id_ = 0;
     bool is_keyframe_ = false;
     double time_stamp_;
-    Sophus::SE3d pose_;     // T_w_c
+    Sophus::SE3d pose_;     // T_c_w
     std::mutex pose_mutex_;
     std::mutex feature_mutex_;
     std::mutex keypoint_mutex_;

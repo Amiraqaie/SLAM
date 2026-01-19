@@ -32,6 +32,15 @@ namespace myslam
 
     inline Eigen::Vector2d toVec2(const cv::Point2f p) { return Eigen::Vector2d(p.x, p.y); }
 
+    template<typename Key, typename Value>
+    std::map<Key, Value> convertUnorderedToOrdered(
+        const std::unordered_map<Key, Value>& unordered_map) 
+    {
+        // std::map has a constructor that accepts iterators from another container.
+        // When copying from an unordered_map, std::map automatically sorts the elements by key.
+        return std::map<Key, Value>(unordered_map.begin(), unordered_map.end());
+    }
+
 }
 
 

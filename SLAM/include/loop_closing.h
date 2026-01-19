@@ -16,25 +16,6 @@
 
 namespace myslam {
 
-struct LoopConstraint {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    
-    unsigned long keyframe1_id;  // Current keyframe
-    unsigned long keyframe2_id;  // Loop keyframe
-    SE3 relative_pose;           // T_12 (from frame1 to frame2)
-    Mat66 information;           // Information matrix
-    double confidence;           // Loop confidence score
-    
-    LoopConstraint(unsigned long kf1, unsigned long kf2, const SE3& pose, 
-                   const Mat66& info, double conf)
-        : keyframe1_id(kf1), keyframe2_id(kf2), relative_pose(pose), 
-          information(info), confidence(conf) {}
-};
-
-/**
- * Loop Closure Detection and Pose Graph Optimization
- * Detects loops using visual bag-of-words and optimizes pose graph
- */
 class LoopClosing {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -86,6 +67,7 @@ private:
     std::vector<cv::DMatch> MatchFeatures(Frame::Ptr frame1, Frame::Ptr frame2);
     std::vector<cv::DMatch> MatchFeatures(cv::Mat descriptors1, cv::Mat descriptors2);
     std::vector<cv::DMatch> TrackFeaturesLK(Frame::Ptr frame);
+    
     // Estimate relative pose using matched features
     bool EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                              const std::vector<cv::DMatch>& matches,

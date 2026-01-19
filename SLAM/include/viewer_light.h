@@ -13,7 +13,6 @@
 #include "map.h"
 
 namespace myslam {
-
 /**
  * 可视化
  */
@@ -59,6 +58,8 @@ class Viewer {
     std::mutex viewer_data_mutex_;
 
     std::condition_variable map_update_;
+
+    std::vector<LoopConstraint> loop_constraints_;
 };
 }  // namespace myslam
 

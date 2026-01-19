@@ -109,6 +109,21 @@ typedef Eigen::Matrix<float, 14, 1> Vec14f;
 typedef Sophus::SE3d SE3;
 typedef Sophus::SO3d SO3;
 
+struct LoopConstraint {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    
+    unsigned long keyframe1_id;  // Current keyframe
+    unsigned long keyframe2_id;  // Loop keyframe
+    SE3 relative_pose;           // T_12 (from frame1 to frame2)
+    Mat66 information;           // Information matrix
+    double confidence;           // Loop confidence score
+    
+    LoopConstraint(unsigned long kf1, unsigned long kf2, const SE3& pose, 
+                   const Mat66& info, double conf)
+        : keyframe1_id(kf1), keyframe2_id(kf2), relative_pose(pose), 
+          information(info), confidence(conf) {}
+};
+
 // for cv
 #include <opencv2/core/core.hpp>
 

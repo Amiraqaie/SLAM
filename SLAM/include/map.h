@@ -45,6 +45,9 @@ public:
         return current_frame_;
     }
 
+    void SetLoopConstraints(std::vector<LoopConstraint> loop_constraints);
+
+    std::vector<LoopConstraint> GetLoopConstraints();
 
     Frame::Ptr GetByKeyFrameId(unsigned long id) {
         std::unique_lock<std::mutex> lck(data_mutex_);
@@ -67,6 +70,8 @@ private:
     KeyframesType active_keyframes_;  // all key-frames
 
     Frame::Ptr current_frame_ = nullptr;
+
+    std::vector<LoopConstraint> loop_constraints_;
 
     // settings
     int num_active_keyframes_ = 7; 

@@ -217,6 +217,7 @@ int Frontend::EstimateCurrentPose()
     LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/"
               << features.size() - cnt_outlier;
     // Set pose and outlier
+    // vertex_pose->estimate() == T_c_w
     current_frame_->SetPose(vertex_pose->estimate());
 
     LOG(INFO) << "Current Pose = \n" << current_frame_->Pose().matrix();

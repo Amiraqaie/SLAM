@@ -110,4 +110,17 @@ void Map::CleanMap() {
     LOG(INFO) << "Removed " << cnt_landmark_removed << " active landmarks";
 }
 
+    void Map::SetLoopConstraints(std::vector<LoopConstraint> loop_constraints)
+    {
+        std::unique_lock<std::mutex> lck(data_mutex_);
+        loop_constraints_ = loop_constraints;
+    }
+
+
+    std::vector<LoopConstraint> Map::GetLoopConstraints()
+    {
+        std::unique_lock<std::mutex> lck(data_mutex_);
+        return loop_constraints_;
+    }
+
 }  // namespace myslam

@@ -57,7 +57,10 @@ void VisualOdometry::Run() {
 
     backend_->Stop();
     loop_closing_->Stop();
-    viewer_->Close();
+    while (1) {
+        usleep(300);
+    }
+    // viewer_->Close();
 
     LOG(INFO) << "VO exit";
 }
