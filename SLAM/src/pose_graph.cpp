@@ -208,13 +208,15 @@ void PoseGraphOptimization::ExtractPoseCorrections(g2o::SparseOptimizer& optimiz
         Eigen::Isometry3d optimized_iso = vertex->estimate();
         SE3 optimized_pose(optimized_iso.linear(), optimized_iso.translation());
         
-        // Compute correction: T_corrected = T_correction * T_original
-        // Therefore: T_correction = T_corrected * T_original^(-1)
-        // T_original = T_w_c (old)
-        // T_crrected = T_w_c (new)
-        // T_correction = look like non sense
-        // should be T_correction = T_original(-1) * T_crrected = T_c(old)_c(new)
-        // or T_correction = T_crrected(-1) * T_original = T_c(new)_c(old) this is better
+        /*
+        Compute correction: T_corrected = T_correction * T_original
+        Therefore: T_correction = T_corrected * T_original^(-1)
+        T_original = T_w_c (old)
+        T_crrected = T_w_c (new)
+        T_correction = look like non sense
+        should be T_correction = T_original(-1) * T_crrected = T_c(old)_c(new)
+        or T_correction = T_crrected(-1) * T_original = T_c(new)_c(old) this is better
+        */
         
         // SE3 correction = optimized_pose * original_poses_[kf_id].inverse();
         SE3 correction = optimized_pose.inverse() * original_poses_[kf_id].inverse();
@@ -267,7 +269,8 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
         SE3 best_correction;
         bool found_correction = false;
         double min_correction_magnitude = std::numeric_limits<double>::max();
-        
+        SE3 RotationMatrix;
+
         for (const auto& obs_weak : observations) {
             auto obs = obs_weak.lock();
             if (!obs) continue;
@@ -284,7 +287,7 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
                     min_correction_magnitude = magnitude;
                     best_correction = correction;
                     found_correction = true;
-
+                    RotationMatrix = frame->Pose().inverse() * original_poses_[kf_id];
                 }
             }
         }
@@ -296,7 +299,7 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
             Vec3 original_pos = landmark->Pos();
 
             // original pose in old camera coordinate
-            Vec3 corrected_pos =  best_correction * original_pos;
+            Vec3 corrected_pos =  RotationMatrix * original_pos;
             landmark->SetPos(corrected_pos);
             corrected_points++;
             
