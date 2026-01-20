@@ -103,6 +103,8 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
                        Map::LandmarksType& landmarks)
 {
     // Optimization code here
+    if (keyframes.size() < 2)
+        return;
     typedef g2o::BlockSolver_6_3 BlockSolverType;
     typedef g2o::LinearSolverCSparse<BlockSolverType::PoseMatrixType> LinearSolverType;
     auto solver = new g2o::OptimizationAlgorithmLevenberg(
@@ -161,7 +163,7 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
             auto kf = feature->frame_.lock();
             if (kf == nullptr || keyframes.count(kf->keyframe_id_) == 0)
                 continue;
-            // std::cout << "Mappoints " << mp->id_ << " has been seen " << mp->observed_times_ << " times and is used in backend" << std::endl; 
+            std::cout << "Mappoints " << mp->id_ << " has been seen " << mp->observed_times_ << " times and is used in backend" << std::endl; 
             EdgeProjection* edge = nullptr;
             if (feature->is_on_left_image_) {
                 edge = new EdgeProjection(K, left_ext);

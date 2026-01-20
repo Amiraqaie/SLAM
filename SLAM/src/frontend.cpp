@@ -77,7 +77,7 @@ bool Frontend::InsertKeyFrame() {
     map_->InsertKeyFrame(current_frame_);
     LOG(INFO) << "Insert a new keyframe " << current_frame_->keyframe_id_
               << ", total keyframes: " << map_->GetAllKeyFrames().size();
-    // SetObservationsForKeyFrame();
+    SetObservationsForKeyFrame();
     DetectFeatures();
     FindFeaturesInRight();
     TriangulateNewPoints();
@@ -122,8 +122,8 @@ int Frontend::TriangulateNewPoints() {
                 new_map_point->SetPos(pworld);
                 new_map_point->AddObservation(
                     current_frame_->features_left_[i]);
-                // new_map_point->AddObservation(
-                //     current_frame_->features_right_[i]);
+                new_map_point->AddObservation(
+                    current_frame_->features_right_[i]);
 
                 current_frame_->features_left_[i]->map_point_ = new_map_point;
                 current_frame_->features_right_[i]->map_point_ = new_map_point;
@@ -267,10 +267,11 @@ int Frontend::TrackLastFrame() {
             cv::KeyPoint kp(kps_current[i], 7);
             Feature::Ptr feature(new Feature(current_frame_, kp));
             feature->map_point_ = last_frame_->features_left_[i]->map_point_;
+            // this is incorrect because we should just insert observation for keyframes
             auto mp = feature->map_point_.lock();
-            if (mp) {
-                mp->AddObservation(feature);
-            }
+            // if (mp) {
+            //     mp->AddObservation(feature);
+            // }
             current_frame_->features_left_.push_back(feature);
             num_good_pts++;
         }
@@ -383,7 +384,7 @@ bool Frontend::BuildInitMap() {
             auto new_map_point = MapPoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
-            // new_map_point->AddObservation(current_frame_->features_right_[i]);
+            new_map_point->AddObservation(current_frame_->features_right_[i]);
             current_frame_->features_left_[i]->map_point_ = new_map_point;
             current_frame_->features_right_[i]->map_point_ = new_map_point;
             cnt_init_landmarks++;

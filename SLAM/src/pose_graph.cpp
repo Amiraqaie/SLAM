@@ -198,15 +198,6 @@ void PoseGraphOptimization::AddLoopClosureEdges(const std::vector<LoopConstraint
         auto kf1 = sorted_keyframes[constraint.keyframe1_id].second;
         auto kf2 = sorted_keyframes[constraint.keyframe2_id].second;
         SE3 relative_pose = kf1->Pose().inverse() * kf2->Pose();
-
-        LOG(INFO) << "--- relative_iso (T_kf1_kf2 from constraint) ---";
-        LOG(INFO) << "Rotation Matrix:\n" << relative_iso.linear();
-        LOG(INFO) << "Translation Vector: " << relative_iso.translation().transpose();
-        LOG(INFO) << "--- relative_pose (T_kf1_kf2 from map data) ---";
-        LOG(INFO) << "SE3 Object: " << relative_pose.matrix().transpose(); 
-
-        LOG(INFO) << "Added loop closure edge between keyframes " 
-                 << constraint.keyframe1_id << " and " << constraint.keyframe2_id;
     }
 }
 
@@ -227,23 +218,9 @@ void PoseGraphOptimization::ExtractPoseCorrections(g2o::SparseOptimizer& optimiz
         Eigen::Isometry3d optimized_iso = vertex->estimate();
         SE3 optimized_pose(optimized_iso.linear(), optimized_iso.translation());
         
-        /*
-        Compute correction: T_corrected = T_correction * T_original
-        Therefore: T_correction = T_corrected * T_original^(-1)
-        T_original = T_w_c (old)
-        T_crrected = T_w_c (new)
-        T_correction = look like non sense
-        should be T_correction = T_original(-1) * T_crrected = T_c(old)_c(new)
-        or T_correction = T_crrected(-1) * T_original = T_c(new)_c(old) this is better
-        */
-        
         // SE3 correction = optimized_pose * original_poses_[kf_id].inverse();
         SE3 correction = optimized_pose.inverse() * original_poses_[kf_id].inverse();
         pose_corrections_[kf_id] = correction;
-        
-        LOG(INFO) << "Keyframe " << kf_id << " correction: " 
-                 << correction.translation().transpose() << " | "
-                 << correction.so3().log().transpose();
     }
 }
 
@@ -321,9 +298,6 @@ void PoseGraphOptimization::CorrectMapPointPositions() {
             Vec3 corrected_pos =  RotationMatrix * original_pos;
             landmark->SetPos(corrected_pos);
             corrected_points++;
-            
-            LOG_EVERY_N(INFO, 100) << "Corrected landmark " << landmark->id_ 
-                                  << " position by " << (corrected_pos - original_pos).norm() << " meters";
         }
     }
     

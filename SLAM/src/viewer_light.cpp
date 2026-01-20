@@ -30,7 +30,7 @@ void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
 void Viewer::UpdateMap() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
     // active_landmarks_ = map_->GetAllMapPoints();
-    landmarks_= map_->GetAllMapPoints();
+    landmarks_= map_->GetActiveMapPoints();
     keyframes_ = map_->GetAllKeyFrames();
     loop_constraints_ = map_->GetLoopConstraints();
     map_updated_ = true;
@@ -108,7 +108,7 @@ void Viewer::ThreadLoop() {
         int index = 0;
         for (auto &landmark : landmarks) {
             index++;
-            if (index % 100 == 0)
+            if (index % 1000 == 0)
                 continue;
             auto pose = landmark.second->Pos();
             cv::Point2f landmark_2d = cv::Point2f(

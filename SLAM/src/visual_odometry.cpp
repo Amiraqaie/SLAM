@@ -63,6 +63,7 @@ void VisualOdometry::Run() {
     while (1)
     {
         usleep(300);
+        TriggerPoseGraphOptimization();
     }
     
     LOG(INFO) << "VO exit";

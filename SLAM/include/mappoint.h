@@ -40,6 +40,14 @@ public:
 
     void AddObservation(std::shared_ptr<Feature> feature) {
         std::unique_lock<std::mutex> lck(data_mutex_);
+
+        // check if this feature is already in observations
+        for (auto &f : observations_) {
+            if (f.lock() == feature) {
+                return;  // already added, skip
+            }
+        }
+
         observations_.push_back(feature);
         observed_times_++;
     }
