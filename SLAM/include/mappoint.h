@@ -22,6 +22,7 @@ public:
     std::mutex data_mutex_;
     int observed_times_ = 0;
     std::list<std::weak_ptr<Feature>> observations_;
+    // std::list<std::weak_ptr<Feature>> key_observations;
 
     MapPoint() {};
 

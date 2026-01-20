@@ -23,6 +23,7 @@ bool VisualOdometry::Init() {
     // create components and links
     frontend_ = Frontend::Ptr(new Frontend);
     backend_ = Backend::Ptr(new Backend);
+    // backend_->Stop();
     map_ = Map::Ptr(new Map);
     viewer_ = Viewer::Ptr(new Viewer);
     // viewer_ = nullptr;
@@ -36,11 +37,13 @@ bool VisualOdometry::Init() {
 
     backend_->SetMap(map_);
     backend_->SetCameras(dataset_->GetCamera(0), dataset_->GetCamera(1));
+    backend_->SetPoseGraph(pose_graph_optimizer_);
 
     loop_closing_->SetMap(map_);
     loop_closing_->SetCameras(dataset_->GetCamera(0), dataset_->GetCamera(1));
     
     pose_graph_optimizer_->SetMap(map_);
+    pose_graph_optimizer_->SetBackend(backend_);
 
     viewer_->SetMap(map_);
 
@@ -57,8 +60,11 @@ void VisualOdometry::Run() {
 
     backend_->Stop();
     loop_closing_->Stop();
-    viewer_->Close();
-
+    while (1)
+    {
+        usleep(300);
+    }
+    
     LOG(INFO) << "VO exit";
 }
 

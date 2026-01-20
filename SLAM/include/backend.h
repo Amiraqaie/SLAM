@@ -6,7 +6,12 @@
 #include "map.h"
 
 namespace myslam {
-class Map;
+    class PoseGraphOptimization;
+    class Map;
+}
+
+
+namespace myslam {
 
 class Backend {
 public:
@@ -23,15 +28,33 @@ public:
 
     void SetMap(Map::Ptr map) { map_ = map; }
 
+    void SetPoseGraph(std::shared_ptr<PoseGraphOptimization> pose_graph) { pose_graph_ = pose_graph; }
+
     void UpdateMap();
 
     void Stop();
 
+
+    void RequestPause();
+    void WaitUntilPaused();
+    void Resume();
 private:
-
     void BackendLoop();
-
+    
     void Optimize(Map::KeyframesType& keyframes, Map::LandmarksType& landmarks);
+
+private:
+    enum class BackendState {
+        IDLE,
+        OPTIMIZING,
+        PAUSED
+    };
+
+    BackendState state_ = BackendState::IDLE;
+    bool pause_requested_ = false;
+    
+    std::mutex state_mutex_;
+    std::condition_variable state_cv_;
 
     Map::Ptr map_ = nullptr;
     std::thread backend_thread_;
@@ -40,8 +63,11 @@ private:
     std::condition_variable map_update_;
     std::atomic<bool> backend_running_;
 
+
     Camera::Ptr cam_left_ = nullptr;
     Camera::Ptr cam_right_ = nullptr;
+
+    std::shared_ptr<PoseGraphOptimization> pose_graph_;
 };
 
 }

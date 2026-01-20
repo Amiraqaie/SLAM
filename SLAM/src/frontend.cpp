@@ -61,7 +61,6 @@ bool Frontend::Track() {
     }
 
     InsertKeyFrame();
-    // relative_motion_ = last_frame_->Pose().inverse() * current_frame_->Pose();
     relative_motion_ = current_frame_->Pose() * last_frame_->Pose().inverse();
     if (viewer_)
     {
@@ -123,8 +122,8 @@ int Frontend::TriangulateNewPoints() {
                 new_map_point->SetPos(pworld);
                 new_map_point->AddObservation(
                     current_frame_->features_left_[i]);
-                new_map_point->AddObservation(
-                    current_frame_->features_right_[i]);
+                // new_map_point->AddObservation(
+                //     current_frame_->features_right_[i]);
 
                 current_frame_->features_left_[i]->map_point_ = new_map_point;
                 current_frame_->features_right_[i]->map_point_ = new_map_point;
@@ -155,7 +154,7 @@ int Frontend::EstimateCurrentPose()
     optimizer.addVertex(vertex_pose);
     // optimizer.setVerbose(true);
 
-    // K 
+    // K
     Eigen::Matrix3d K = camera_left_->K();
 
     // edges
@@ -225,6 +224,9 @@ int Frontend::EstimateCurrentPose()
     for (auto &feat : features) {
         if (feat->is_outlier_) {
             feat->map_point_.reset();
+            // MapPoint::Ptr mp = feat->map_point_.lock();
+            // if (mp)
+            //     mp->RemoveObservation(feat);
             feat->is_outlier_ = false;  // maybe we can still use it in future
         }
     }
@@ -265,6 +267,10 @@ int Frontend::TrackLastFrame() {
             cv::KeyPoint kp(kps_current[i], 7);
             Feature::Ptr feature(new Feature(current_frame_, kp));
             feature->map_point_ = last_frame_->features_left_[i]->map_point_;
+            auto mp = feature->map_point_.lock();
+            if (mp) {
+                mp->AddObservation(feature);
+            }
             current_frame_->features_left_.push_back(feature);
             num_good_pts++;
         }
@@ -377,7 +383,7 @@ bool Frontend::BuildInitMap() {
             auto new_map_point = MapPoint::CreateNewMappoint();
             new_map_point->SetPos(pworld);
             new_map_point->AddObservation(current_frame_->features_left_[i]);
-            new_map_point->AddObservation(current_frame_->features_right_[i]);
+            // new_map_point->AddObservation(current_frame_->features_right_[i]);
             current_frame_->features_left_[i]->map_point_ = new_map_point;
             current_frame_->features_right_[i]->map_point_ = new_map_point;
             cnt_init_landmarks++;

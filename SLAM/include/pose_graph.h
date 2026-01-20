@@ -15,11 +15,11 @@
 #include <g2o/types/slam3d/edge_se3.h>
 
 namespace myslam {
+    class Backend;
+}
 
-/**
- * Pose Graph Optimization using g2o
- * Optimizes camera poses globally and corrects map point positions
- */
+namespace myslam {
+
 class PoseGraphOptimization {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -29,7 +29,9 @@ public:
     
     // Set map for pose graph construction
     void SetMap(Map::Ptr map) { map_ = map; }
-    
+
+    void SetBackend(std::shared_ptr<Backend> backend) { backend_ = backend; }
+
     // Perform full pose graph optimization
     bool OptimizePoseGraph(const std::vector<LoopConstraint>& loop_constraints);
     
@@ -61,13 +63,15 @@ private:
     
     // Correct map point positions based on pose corrections
     void CorrectMapPointPositions();
-    
+        
 private:
     Map::Ptr map_;
     
     // Store original poses before optimization
     std::unordered_map<unsigned long, SE3> original_poses_;
     
+    std::shared_ptr<Backend> backend_;
+
     // Store pose corrections (T_corrected = correction * T_original)
     std::unordered_map<unsigned long, SE3> pose_corrections_;
     

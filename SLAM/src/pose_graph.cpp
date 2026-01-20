@@ -1,10 +1,11 @@
 #include "pose_graph.h"
 #include "feature.h"
+#include "backend.h"
 
 namespace myslam {
 
 PoseGraphOptimization::PoseGraphOptimization() {
-    max_iterations_ = 100;
+    max_iterations_ = 200;
     verbose_ = true;
     
     LOG(INFO) << "Pose Graph Optimization initialized";
@@ -15,7 +16,13 @@ bool PoseGraphOptimization::OptimizePoseGraph(const std::vector<LoopConstraint>&
         LOG(WARNING) << "No loop constraints for pose graph optimization";
         return false;
     }
-    
+
+    // Stop backend safely
+    if (backend_) {
+        backend_->RequestPause();
+        backend_->WaitUntilPaused();
+    }
+
     LOG(INFO) << "Starting pose graph optimization with " << loop_constraints.size() << " loop constraints";
     
     // Create g2o optimizer
@@ -51,10 +58,22 @@ bool PoseGraphOptimization::OptimizePoseGraph(const std::vector<LoopConstraint>&
         
         // Update map with corrected poses and map points
         UpdateMapAfterOptimization();
-        
+    
+        if (backend_) {
+            backend_->Resume();
+            backend_->UpdateMap();
+        }
+
         return true;
+
     } else {
         LOG(ERROR) << "Pose graph optimization failed";
+
+        if (backend_) {
+            backend_->Resume();
+            backend_->UpdateMap();
+        }
+        
         return false;
     }
 }

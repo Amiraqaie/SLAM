@@ -29,8 +29,9 @@ void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
 
 void Viewer::UpdateMap() {
     std::unique_lock<std::mutex> lock(viewer_data_mutex_);
-    active_landmarks_ = map_->GetActiveMapPoints();
-    active_keyframes_ = map_->GetAllKeyFrames();
+    // active_landmarks_ = map_->GetAllMapPoints();
+    landmarks_= map_->GetAllMapPoints();
+    keyframes_ = map_->GetAllKeyFrames();
     loop_constraints_ = map_->GetLoopConstraints();
     map_updated_ = true;
 }
@@ -48,9 +49,9 @@ void Viewer::ThreadLoop() {
         std::vector<LoopConstraint> constraints;
         {
             std::unique_lock<std::mutex> lock(viewer_data_mutex_);
-            keyframes = std::map<unsigned long, Frame::Ptr>(active_keyframes_.begin(), active_keyframes_.end());
+            keyframes = std::map<unsigned long, Frame::Ptr>(keyframes_.begin(), keyframes_.end());
             current_frame = current_frame_;
-            landmarks = active_landmarks_;
+            landmarks = landmarks_;
             constraints = loop_constraints_;
         }
 
@@ -129,31 +130,32 @@ void Viewer::ThreadLoop() {
 
         
         // Draw Loop Constraints
-        for (auto constraint : constraints)
-        {
-            int keyframe1_id = constraint.keyframe1_id;
-            int keyframe2_id = constraint.keyframe2_id;
-            
-            Frame::Ptr kf1 = map_->GetByKeyFrameId(keyframe1_id);
-            Frame::Ptr kf2 = map_->GetByKeyFrameId(keyframe2_id);
-            
-            SE3 Twc1 = kf1->Pose().inverse();
-            SE3 Twc2 = kf2->Pose().inverse();
-            
-            Eigen::Vector3d t1 = Twc1.translation();
-            Eigen::Vector3d t2 = Twc2.translation();
-            
-            cv::Point2f p1 = cv::Point2f(
-                margin + (t1.x() - min_x) * scale,
-                TRAJ_SIZE - margin - (t1.z() - min_z) * scale
-            );
-            cv::Point2f p2 = cv::Point2f(
-                margin + (t2.x() - min_x) * scale,
-                TRAJ_SIZE - margin - (t2.z() - min_z) * scale
-            );
-            cv::line(traj, p1, p2, cv::Scalar(0, 0, 255), 1);   
+        if (!constraints.empty()){
+            for (auto constraint : constraints)
+            {
+                int keyframe1_id = constraint.keyframe1_id;
+                int keyframe2_id = constraint.keyframe2_id;
+                
+                Frame::Ptr kf1 = map_->GetByKeyFrameId(keyframe1_id);
+                Frame::Ptr kf2 = map_->GetByKeyFrameId(keyframe2_id);
+                
+                SE3 Twc1 = kf1->Pose().inverse();
+                SE3 Twc2 = kf2->Pose().inverse();
+                
+                Eigen::Vector3d t1 = Twc1.translation();
+                Eigen::Vector3d t2 = Twc2.translation();
+                
+                cv::Point2f p1 = cv::Point2f(
+                    margin + (t1.x() - min_x) * scale,
+                    TRAJ_SIZE - margin - (t1.z() - min_z) * scale
+                );
+                cv::Point2f p2 = cv::Point2f(
+                    margin + (t2.x() - min_x) * scale,
+                    TRAJ_SIZE - margin - (t2.z() - min_z) * scale
+                );
+                cv::line(traj, p1, p2, cv::Scalar(0, 0, 255), 1);   
+            }
         }
-        
         cv::imshow("MySLAM Track", traj);
         cv::waitKey(5);
     }

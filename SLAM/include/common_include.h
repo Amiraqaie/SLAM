@@ -124,6 +124,12 @@ struct LoopConstraint {
           information(info), confidence(conf) {}
 };
 
+enum class BackendState {
+    IDLE,
+    OPTIMIZING,
+    PAUSED
+};
+
 // for cv
 #include <opencv2/core/core.hpp>
 

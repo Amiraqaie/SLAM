@@ -272,17 +272,6 @@ std::map<int, Vec3> LoopClosing::TriangulateFeatures(Frame::Ptr frame) {
         LOG(WARNING) << "No ORB features found in right image!";
         return triangulated_points;
     }
-    
-    if (show_result_)
-    {   
-        std::string file_name = std::to_string(frame->id_) + "_LeftToRight.png";
-        std::cout << file_name << std::endl;
-        cv::Mat outImg;
-        cv::drawMatches(frame->left_img_, key_points_left, frame->right_img_, key_points_right, matches, outImg);
-        cv::imshow("left to right triangulation", outImg);
-        // cv::imwrite(file_name, outImg);
-    }
-
 
     // TODO : Check if feature have map point available
     // then use them in camera coordinate as triangulated result
@@ -409,21 +398,6 @@ bool LoopClosing::EstimateRelativePose(Frame::Ptr frame1, Frame::Ptr frame2,
                                        SE3& relative_pose, Mat66& information) {
     if (matches.size() < static_cast<size_t>(min_inliers_))
         return false;
-
-    // show result of loop closure
-    if (show_result_)
-    {   
-        // Match features between frames
-        std::vector<cv::KeyPoint> keypoints1, keypoints2;
-        keypoints1 = frame1->GetValidKeypointsLeft();
-        keypoints2 = frame2->GetValidKeypointsLeft();
-        std::string file_name1 = std::to_string(frame1->id_) + "_" + std::to_string(frame2->id_) + ".png";
-        std::cout << "Number of matches: " << matches.size() << std::endl;
-        cv::Mat outImg;
-        cv::drawMatches(frame1->left_img_, keypoints1, frame2->left_img_, keypoints2, matches, outImg);
-        cv::imshow("loop closure result", outImg);
-        // cv::imwrite(file_name1, outImg);
-    }
 
     // Step 1: Triangulate ORB features in frame1 using stereo
     std::map<int, Vec3> pts3d_frame1 = TriangulateFeatures(frame1);

@@ -49,7 +49,6 @@ void Map::InsertMapPoint(MapPoint::Ptr map_point) {
 
 void Map::RemoveOldKeyframe() {
     if (current_frame_ == nullptr) return;
-    // 寻找与当前帧最近与最远的两个关键帧
     double max_dis = 0, min_dis = 9999;
     double max_kf_id = 0, min_kf_id = 0;
     auto Twc = current_frame_->Pose().inverse();
@@ -66,61 +65,97 @@ void Map::RemoveOldKeyframe() {
         }
     }
 
-    const double min_dis_th = 0.2;  // 最近阈值
+    const double min_dis_th = 0.2;
     Frame::Ptr frame_to_remove = nullptr;
     if (min_dis < min_dis_th) {
-        // 如果存在很近的帧，优先删掉最近的
         frame_to_remove = keyframes_.at(min_kf_id);
     } else {
-        // 删掉最远的
         frame_to_remove = keyframes_.at(max_kf_id);
     }
 
     LOG(INFO) << "remove keyframe " << frame_to_remove->keyframe_id_;
     // remove keyframe and landmark observation
     active_keyframes_.erase(frame_to_remove->keyframe_id_);
-    for (auto feat : frame_to_remove->features_left_) {
-        auto mp = feat->map_point_.lock();
-        if (mp) {
-            mp->RemoveObservation(feat);
-        }
-    }
-    for (auto feat : frame_to_remove->features_right_) {
-        if (feat == nullptr) continue;
-        auto mp = feat->map_point_.lock();
-        if (mp) {
-            mp->RemoveObservation(feat);
-        }
-    }
+
+    // for (auto feat : frame_to_remove->features_left_) {
+    //     auto mp = feat->map_point_.lock();
+    //     if (mp) {
+    //         mp->RemoveObservation(feat);
+    //     }
+    // }
+    // for (auto feat : frame_to_remove->features_right_) {
+    //     if (feat == nullptr) continue;
+    //     auto mp = feat->map_point_.lock();
+    //     if (mp) {
+    //         mp->RemoveObservation(feat);
+    //     }
+    // }
 
     CleanMap();
 }
 
+
+// void Map::CleanMap() {
+//     int cnt_landmark_removed = 0;
+//     for (auto iter = active_landmarks_.begin();
+//          iter != active_landmarks_.end();) {
+//         if (iter->second->observed_times_ == 0) {
+//             iter = active_landmarks_.erase(iter);
+//             cnt_landmark_removed++;
+//         } else {
+//             ++iter;
+//         }
+//     }
+//     LOG(INFO) << "Removed " << cnt_landmark_removed << " active landmarks";
+// }
+
 void Map::CleanMap() {
-    int cnt_landmark_removed = 0;
+    int cnt_removed = 0;
+
     for (auto iter = active_landmarks_.begin();
          iter != active_landmarks_.end();) {
-        if (iter->second->observed_times_ == 0) {
+
+        bool is_observed_by_active_kf = false;
+        const auto& mp = iter->second;
+
+        for (const auto& obs_weak : mp->observations_) {
+            auto obs = obs_weak.lock();
+            if (!obs) continue;
+
+            auto frame = obs->frame_.lock();
+            if (!frame) continue;
+
+            // is this observation from an active keyframe?
+            if (active_keyframes_.count(frame->keyframe_id_)) {
+                is_observed_by_active_kf = true;
+                break;
+            }
+        }
+
+        if (!is_observed_by_active_kf) {
             iter = active_landmarks_.erase(iter);
-            cnt_landmark_removed++;
+            cnt_removed++;
         } else {
             ++iter;
         }
     }
-    LOG(INFO) << "Removed " << cnt_landmark_removed << " active landmarks";
+
+    LOG(INFO) << "Removed " << cnt_removed
+              << " inactive landmarks, remaining "
+              << active_landmarks_.size();
 }
 
-    void Map::SetLoopConstraints(std::vector<LoopConstraint> loop_constraints)
-    {
-        std::unique_lock<std::mutex> lck(data_mutex_);
-        loop_constraints_ = loop_constraints;
-    }
+void Map::SetLoopConstraints(std::vector<LoopConstraint> loop_constraints)
+{
+    std::unique_lock<std::mutex> lck(data_mutex_);
+    loop_constraints_ = loop_constraints;
+}
 
 
-    std::vector<LoopConstraint> Map::GetLoopConstraints()
-    {
-        std::unique_lock<std::mutex> lck(data_mutex_);
-        return loop_constraints_;
-    }
+std::vector<LoopConstraint> Map::GetLoopConstraints()
+{
+    std::unique_lock<std::mutex> lck(data_mutex_);
+    return loop_constraints_;
+}
 
 }  // namespace myslam
