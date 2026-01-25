@@ -22,7 +22,9 @@ public:
     bool is_keyframe_ = false;
     double time_stamp_;
     Sophus::SE3d pose_;     // T_c_w
+    Sophus::SE3d gt_pose_;
     std::mutex pose_mutex_;
+    std::mutex gt_pose_mutex_;
     std::mutex feature_mutex_;
     std::mutex keypoint_mutex_;
     cv::Mat left_img_, right_img_;
@@ -43,12 +45,22 @@ public:
         std::unique_lock<std::mutex> lck(pose_mutex_);
         return pose_;
     }
+
+    Sophus::SE3d GtPose() {
+        std::unique_lock<std::mutex> lck(gt_pose_mutex_);
+        return gt_pose_;
+    }
     
     void SetPose(const Sophus::SE3d &pose) {
         std::unique_lock<std::mutex> lck(pose_mutex_);
         pose_ = pose;
     }
-    
+
+    void SetGtPose(const Sophus::SE3d &gt_pose) {
+        std::unique_lock<std::mutex> lck(gt_pose_mutex_);
+        gt_pose_ = gt_pose;
+    }
+
     void SetKeyFrame();
 
     std::vector<cv::KeyPoint> GetKeypointsLeft();

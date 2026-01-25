@@ -88,6 +88,8 @@ private:
     int num_features_bad_ = 20;
     int num_features_for_keyframe_ = 80;
 
+    double distance_traveled = 0.0;
+
     cv::Ptr<cv::GFTTDetector> gftt_detector_;
 };
 

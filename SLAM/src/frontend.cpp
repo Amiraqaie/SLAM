@@ -220,6 +220,18 @@ int Frontend::EstimateCurrentPose()
     current_frame_->SetPose(vertex_pose->estimate());
 
     LOG(INFO) << "Current Pose = \n" << current_frame_->Pose().matrix();
+    LOG(INFO) << "Ground truth Pose = \n" << current_frame_->GtPose().matrix();
+    
+    // calculate distance traveled from ground truth
+    Sophus::SE3d gt_relative_pose = (last_frame_->GtPose() * current_frame_->GtPose().inverse());
+    double step_traveled = gt_relative_pose.translation().norm();
+    distance_traveled += step_traveled;
+    LOG(INFO) << "Distance traveled : " << distance_traveled;
+
+    // calculate the error vector
+    Sophus::SE3d error_relative_pose = current_frame_->Pose() * current_frame_->GtPose().inverse();
+    double error = error_relative_pose.translation().norm();
+    LOG(INFO) << "Error Size (meter) : " << error;
 
     for (auto &feat : features) {
         if (feat->is_outlier_) {

@@ -23,7 +23,7 @@ private:
     std::string dataset_path_;
     int current_images_index_ = 0;
     std::vector<Camera::Ptr> cameras_;
-
+    std::vector<Sophus::SE3d> poses_;
 };
 }  // namespace myslam
 

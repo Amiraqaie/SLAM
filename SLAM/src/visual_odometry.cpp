@@ -23,10 +23,8 @@ bool VisualOdometry::Init() {
     // create components and links
     frontend_ = Frontend::Ptr(new Frontend);
     backend_ = Backend::Ptr(new Backend);
-    // backend_->Stop();
     map_ = Map::Ptr(new Map);
     viewer_ = Viewer::Ptr(new Viewer);
-    // viewer_ = nullptr;
     loop_closing_ = LoopClosing::Ptr(new LoopClosing);
     pose_graph_optimizer_ = PoseGraphOptimization::Ptr(new PoseGraphOptimization);
 
@@ -60,11 +58,16 @@ void VisualOdometry::Run() {
 
     backend_->Stop();
     loop_closing_->Stop();
-    while (1)
-    {
-        usleep(300);
-        TriggerPoseGraphOptimization();
+
+    // Wait for ESC key
+    while (true) {
+        int key = cv::waitKey(30);  // 30 ms delay
+        if (key == 27) {            // ESC key code
+            break;
+        }
     }
+    
+    viewer_->Close();
     
     LOG(INFO) << "VO exit";
 }

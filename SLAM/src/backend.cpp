@@ -129,7 +129,7 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
         optimizer.addVertex(v);
         if (kf->id_ > max_kf_id)
             max_kf_id = kf->id_;
-        // std::cout << "Keyframe " << kf->keyframe_id_ << " is in BA window and is used in backend" << std::endl;
+
         vertices.insert({kf->keyframe_id_, v});
     }
 
@@ -153,8 +153,6 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
         unsigned long landmark_id = landmark.second->id_;
         auto mp = landmark.second;
         auto obs = mp->GetObs();
-        if (obs.size() < 2)
-            continue;
         for (auto &weak_feature : obs)
         {
             auto feature = weak_feature.lock();
@@ -163,7 +161,6 @@ void Backend::Optimize(Map::KeyframesType& keyframes,
             auto kf = feature->frame_.lock();
             if (kf == nullptr || keyframes.count(kf->keyframe_id_) == 0)
                 continue;
-            std::cout << "Mappoints " << mp->id_ << " has been seen " << mp->observed_times_ << " times and is used in backend" << std::endl; 
             EdgeProjection* edge = nullptr;
             if (feature->is_on_left_image_) {
                 edge = new EdgeProjection(K, left_ext);

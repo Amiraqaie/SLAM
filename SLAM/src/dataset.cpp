@@ -49,6 +49,54 @@ bool Dataset::Init() {
         LOG(INFO) << "Camera " << i << " extrinsics: " << t.transpose();
     }
     fin.close();
+
+    // ================= LOAD POSES =================
+    std::ifstream pose_file(dataset_path_ + "/poses.txt");
+    if (!pose_file) {
+        LOG(WARNING) << "No poses.txt found, running without ground truth";
+        return true;  // allow VO-only mode
+    }
+
+    while (true) {
+        Eigen::Matrix<double, 3, 4> T;
+        for (int i = 0; i < 12; i++) {
+            if (!(pose_file >> T(i / 4, i % 4))) {
+                break;  // <<< just break the inner for loop
+            }
+        }
+
+        // Check if reading failed (end of file)
+        if (pose_file.eof() || pose_file.fail()) {
+            break;  // <<< break the while loop
+        }
+
+        Eigen::Matrix3d R = T.block<3,3>(0,0);
+        Eigen::Vector3d t = T.block<3,1>(0,3);
+
+        // ---- FORCE R INTO SO(3) ----
+        Eigen::JacobiSVD<Eigen::Matrix3d> svd(
+            R, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+        R = svd.matrixU() * svd.matrixV().transpose();
+
+        if (R.determinant() < 0) {
+            R = -R;  // handle reflection edge case
+        }
+
+        Sophus::SE3d T_w_c(R, t);
+        poses_.push_back(T_w_c);
+    }
+
+    // Logging after all poses are read
+    LOG(INFO) << "Loaded " << poses_.size() << " ground-truth poses.";
+    pose_file.close();
+
+    double total_dist = 0;
+    for (int i = 1; i < poses_.size(); ++i) {
+        total_dist += (poses_[i].translation() - poses_[i-1].translation()).norm();
+    }
+    LOG(INFO) << "Total Trajectory length of sequence " << total_dist << " meters.";
+
     current_images_index_ = 0;
     return true;
 }
@@ -78,6 +126,12 @@ Frame::Ptr Dataset::NextFrame() {
     auto new_frame = Frame::CreateFrame();
     new_frame->left_img_ = image_left_resized;
     new_frame->right_img_ = image_right_resized;
+
+    // ================= SET GT POSE =================
+    if (current_images_index_ < poses_.size()) {
+        new_frame->SetGtPose(poses_[current_images_index_].inverse());
+    }
+
     current_images_index_++;
     return new_frame;
 }
