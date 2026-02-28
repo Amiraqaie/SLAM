@@ -7,6 +7,7 @@
 using namespace std;
 
 namespace myslam {
+double RESIZE_FACTOR = 0.5;
 
 Dataset::Dataset(const std::string& dataset_path)
     : dataset_path_(dataset_path) {}
@@ -40,7 +41,7 @@ bool Dataset::Init() {
         t << projection_data[3], projection_data[7], projection_data[11];
 
         t = K.inverse() * t;
-        K = K * 0.5;  // image is resized to half size
+        K = K * RESIZE_FACTOR;  // image is resized to half size
 
         Sophus::SE3d pose(Eigen::Matrix3d::Identity(), t);
         Camera::Ptr new_camera(new Camera(K(0, 0), K(1, 1), K(0, 2), K(1, 2),
@@ -118,9 +119,9 @@ Frame::Ptr Dataset::NextFrame() {
     }
 
     cv::Mat image_left_resized, image_right_resized;
-    cv::resize(image_left, image_left_resized, cv::Size(), 0.5, 0.5,
+    cv::resize(image_left, image_left_resized, cv::Size(), RESIZE_FACTOR, RESIZE_FACTOR,
                cv::INTER_NEAREST);
-    cv::resize(image_right, image_right_resized, cv::Size(), 0.5, 0.5,
+    cv::resize(image_right, image_right_resized, cv::Size(), RESIZE_FACTOR, RESIZE_FACTOR,
                cv::INTER_NEAREST);
 
     auto new_frame = Frame::CreateFrame();
